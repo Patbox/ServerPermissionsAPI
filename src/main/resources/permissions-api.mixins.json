@@ -1,10 +1,10 @@
 {
   "required": true,
   "minVersion": "0.8",
-  "package": "eu.pb4.compatibility.mixin",
+  "package": "eu.pb4.permissions.mixin",
   "compatibilityLevel": "JAVA_16",
   "mixins": [
-
+    "MinecraftServerMixin"
   ],
   "injectors": {
     "defaultRequire": 1

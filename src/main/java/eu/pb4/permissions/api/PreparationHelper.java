@@ -1,27 +1,23 @@
-package eu.pb4.compatibility.permissions;
+package eu.pb4.permissions.api;
 
 import com.mojang.authlib.GameProfile;
-import eu.pb4.compatibility.CompatibilityMod;
+import eu.pb4.permissions.PermissionsAPIMod;
+import net.fabricmc.loader.api.FabricLoader;
+import net.fabricmc.loader.api.entrypoint.EntrypointContainer;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.OperatorEntry;
 import net.minecraft.server.world.ServerWorld;
-import net.minecraft.util.Identifier;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 
 import java.time.Duration;
+import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.List;
 
-
-public final class PermissionRegistration {
+@ApiStatus.Internal
+public final class PreparationHelper {
     private static boolean DONE = false;
-    private static Set<Event> EVENTS = new HashSet<>();
-
-    public static void register(Event event) {
-        EVENTS.add(event);
-    }
 
     @ApiStatus.Internal
     public static void run(MinecraftServer server) {
@@ -30,11 +26,14 @@ public final class PermissionRegistration {
         }
         DONE = true;
         PermissionProvider current = createVanillaProvider(server);
-        Permissions.PROVIDERS.put(current.getIdentifier(), current);
-        for (Event event : EVENTS) {
+        List<String> providersNames = new ArrayList<>();
+        Permissions.PROVIDERS.put("vanilla", current);
+        providersNames.add(current.getName());
+        for (EntrypointContainer<PermissionProvider> container : FabricLoader.getInstance().getEntrypointContainers("permission-provider", PermissionProvider.class)) {
             try {
-                current = event.create(server, current);
+                current = container.getEntrypoint();
                 Permissions.PROVIDERS.put(current.getIdentifier(), current);
+                providersNames.add(current.getName());
 
             } catch (Exception e) {
                 e.printStackTrace();
@@ -42,12 +41,8 @@ public final class PermissionRegistration {
         }
         Permissions.DEFAULT_PROVIDER = current;
 
-        CompatibilityMod.LOGGER.info("Selected permission provider: " + current.getName());
-    }
-
-    @FunctionalInterface
-    public interface Event {
-        PermissionProvider create(MinecraftServer server, PermissionProvider currentProvider);
+        PermissionsAPIMod.LOGGER.info("Registered providers: " + String.join(", ", providersNames));
+        PermissionsAPIMod.LOGGER.info("Selected: " + current.getName());
     }
 
     private static PermissionProvider createVanillaProvider(MinecraftServer server) {
@@ -94,15 +89,24 @@ public final class PermissionRegistration {
             }
 
             @Override
-            public Set<String> getUserPermissions(GameProfile user, @Nullable ServerWorld world, PermissionValue value) {
+            public List<String> getUserPermissions(GameProfile user, @Nullable ServerWorld world, PermissionValue value) {
                 OperatorEntry entry = server.getPlayerManager().getOpList().get(user);
-                return entry != null && entry.getPermissionLevel() == 4 ? Set.of("*") : Collections.EMPTY_SET;
+                return entry != null && entry.getPermissionLevel() == 4 ? List.of("*") : Collections.EMPTY_LIST;
             }
 
             @Override
-            public Set<String> getUserSpecificPermissions(GameProfile user, @Nullable ServerWorld world, PermissionValue value) {
-                OperatorEntry entry = server.getPlayerManager().getOpList().get(user);
-                return entry != null && entry.getPermissionLevel() == 4 ? Set.of("*") : Collections.EMPTY_SET;
+            public List<String> getUserPermissions(GameProfile user, String parentPermission, @Nullable ServerWorld world, PermissionValue value) {
+                return this.getUserPermissions(user, world, value);
+            }
+
+            @Override
+            public List<String> getUserSpecificPermissions(GameProfile user, @Nullable ServerWorld world, PermissionValue value) {
+                return this.getUserPermissions(user, world, value);
+            }
+
+            @Override
+            public List<String> getUserSpecificPermissions(GameProfile user, String parentPermission, @Nullable ServerWorld world, PermissionValue value) {
+                return this.getUserPermissions(user, world, value);
             }
 
             @Override
@@ -116,16 +120,16 @@ public final class PermissionRegistration {
             }
 
             @Override
-            public Set<String> getUserGroups(GameProfile user, @Nullable ServerWorld world) {
+            public List<String> getUserGroups(GameProfile user, @Nullable ServerWorld world) {
                 OperatorEntry entry = server.getPlayerManager().getOpList().get(user);
-                Set<String> set = new HashSet<>();
+                List<String> list = new ArrayList<>();
                 if (entry != null) {
                     for (int x = 1; x <= entry.getPermissionLevel(); x++) {
-                        set.add("operator-" + x);
+                        list.add("operator-" + x);
                     }
                 }
 
-                return set;
+                return list;
             }
 
             @Override
@@ -149,13 +153,23 @@ public final class PermissionRegistration {
             }
 
             @Override
-            public Set<String> getGroupPermissions(String group, @Nullable ServerWorld world, PermissionValue value) {
-                return Collections.EMPTY_SET;
+            public List<String> getGroupPermissions(String group, @Nullable ServerWorld world, PermissionValue value) {
+                return Collections.EMPTY_LIST;
             }
 
             @Override
-            public Set<String> getGroupSpecificPermissions(String group, @Nullable ServerWorld world, PermissionValue value) {
-                return Collections.EMPTY_SET;
+            public List<String> getGroupPermissions(String group, String parentPermission, @Nullable ServerWorld world, PermissionValue value) {
+                return Collections.EMPTY_LIST;
+            }
+
+            @Override
+            public List<String> getGroupSpecificPermissions(String group, @Nullable ServerWorld world, PermissionValue value) {
+                return Collections.EMPTY_LIST;
+            }
+
+            @Override
+            public List<String> getGroupSpecificPermissions(String group, String parentPermission, @Nullable ServerWorld world, PermissionValue value) {
+                return Collections.EMPTY_LIST;
             }
         };
     }

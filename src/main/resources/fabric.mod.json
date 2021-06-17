@@ -1,28 +1,29 @@
 {
   "schemaVersion": 1,
-  "id": "server-compatibility-api",
+  "id": "permissions-api",
   "version": "${version}",
 
-  "name": "Server Compatibility API",
-  "description": "API for simplifying mod to mod compatibility",
+  "name": "Permissions API",
+  "description": "Simple Permissions API for Fabric",
   "authors": [
     "Patbox"
   ],
   "contact": {
     "homepage": "https://pb4.eu",
-    "sources": "https://github.com/Patbox/server-compatibility-api"
+    "sources": "https://github.com/Patbox/ServerPermissionsAPI"
   },
   "license": "MIT",
   "environment": "*",
   "entrypoints": {
     "main": [
-      "eu.pb4.compatibility.CompatibilityMod"
+      "eu.pb4.permissions.PermissionsAPIMod"
     ]
   },
-
+  "mixins": [
+    "permissions-api.mixins.json"
+  ],
   "depends": {
     "fabricloader": ">=0.11.3",
-    "fabric": "*",
     "java": ">=16"
   }
 }
