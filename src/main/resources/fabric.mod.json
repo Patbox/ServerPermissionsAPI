@@ -1,0 +1,28 @@
+{
+  "schemaVersion": 1,
+  "id": "server-compatibility-api",
+  "version": "${version}",
+
+  "name": "Server Compatibility API",
+  "description": "API for simplifying mod to mod compatibility",
+  "authors": [
+    "Patbox"
+  ],
+  "contact": {
+    "homepage": "https://pb4.eu",
+    "sources": "https://github.com/Patbox/server-compatibility-api"
+  },
+  "license": "MIT",
+  "environment": "*",
+  "entrypoints": {
+    "main": [
+      "eu.pb4.compatibility.CompatibilityMod"
+    ]
+  },
+
+  "depends": {
+    "fabricloader": ">=0.11.3",
+    "fabric": "*",
+    "java": ">=16"
+  }
+}
