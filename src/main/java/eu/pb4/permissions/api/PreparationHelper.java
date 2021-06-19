@@ -1,11 +1,10 @@
 package eu.pb4.permissions.api;
 
-import com.mojang.authlib.GameProfile;
 import eu.pb4.permissions.PermissionsAPIMod;
+import eu.pb4.permissions.api.context.UserContext;
 import net.fabricmc.loader.api.FabricLoader;
 import net.fabricmc.loader.api.entrypoint.EntrypointContainer;
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.server.OperatorEntry;
 import net.minecraft.server.world.ServerWorld;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
@@ -83,94 +82,85 @@ public final class PreparationHelper {
             }
 
             @Override
-            public PermissionValue checkUserPermission(GameProfile user, @Nullable ServerWorld world, String permission) {
-                OperatorEntry entry = server.getPlayerManager().getOpList().get(user);
-                return entry != null && entry.getPermissionLevel() == 4 ? PermissionValue.TRUE : PermissionValue.DEFAULT;
+            public PermissionValue check(UserContext user, String permission) {
+                return user.getPermissionLevel() >= 4 ? PermissionValue.TRUE : PermissionValue.DEFAULT;
             }
 
             @Override
-            public List<String> getUserPermissions(GameProfile user, @Nullable ServerWorld world, PermissionValue value) {
-                OperatorEntry entry = server.getPlayerManager().getOpList().get(user);
-                return entry != null && entry.getPermissionLevel() == 4 ? List.of("*") : Collections.EMPTY_LIST;
+            public List<String> getList(UserContext user, @Nullable ServerWorld world, PermissionValue value) {
+                return Collections.EMPTY_LIST;
             }
 
             @Override
-            public List<String> getUserPermissions(GameProfile user, String parentPermission, @Nullable ServerWorld world, PermissionValue value) {
-                return this.getUserPermissions(user, world, value);
+            public List<String> getList(UserContext user, String parentPermission, @Nullable ServerWorld world, PermissionValue value) {
+                return Collections.EMPTY_LIST;
             }
 
             @Override
-            public List<String> getUserSpecificPermissions(GameProfile user, @Nullable ServerWorld world, PermissionValue value) {
-                return this.getUserPermissions(user, world, value);
+            public List<String> getListNonInherited(UserContext user, @Nullable ServerWorld world, PermissionValue value) {
+                return Collections.EMPTY_LIST;
             }
 
             @Override
-            public List<String> getUserSpecificPermissions(GameProfile user, String parentPermission, @Nullable ServerWorld world, PermissionValue value) {
-                return this.getUserPermissions(user, world, value);
+            public List<String> getListNonInherited(UserContext user, String parentPermission, @Nullable ServerWorld world, PermissionValue value) {
+                return Collections.EMPTY_LIST;
             }
 
             @Override
-            public void setUserPermission(GameProfile user, @Nullable ServerWorld world, PermissionValue value) {
-
-            }
-
-            @Override
-            public void setUserPermission(GameProfile user, @Nullable ServerWorld world, PermissionValue value, Duration duration) {
+            public void set(UserContext user, @Nullable ServerWorld world, PermissionValue value) {
 
             }
 
             @Override
-            public List<String> getUserGroups(GameProfile user, @Nullable ServerWorld world) {
-                OperatorEntry entry = server.getPlayerManager().getOpList().get(user);
-                List<String> list = new ArrayList<>();
-                if (entry != null) {
-                    for (int x = 1; x <= entry.getPermissionLevel(); x++) {
-                        list.add("operator-" + x);
-                    }
-                }
-
-                return list;
-            }
-
-            @Override
-            public void addUserGroup(GameProfile user, @Nullable ServerWorld world, String group) {
+            public void set(UserContext user, @Nullable ServerWorld world, PermissionValue value, Duration duration) {
 
             }
 
             @Override
-            public void addUserGroup(GameProfile user, @Nullable ServerWorld world, String group, Duration duration) {
+            public List<String> getGroups(UserContext user, @Nullable ServerWorld world) {
+                return Collections.EMPTY_LIST;
+            }
+
+            @Override
+            public void addGroup(UserContext user, @Nullable ServerWorld world, String group) {
 
             }
 
             @Override
-            public void removeUserGroup(GameProfile user, @Nullable ServerWorld world, String group) {
+            public void addGroup(UserContext user, @Nullable ServerWorld world, String group, Duration duration) {
 
             }
 
             @Override
-            public PermissionValue checkGroupPermission(String group, @Nullable ServerWorld world, String permission) {
+            public void removeGroup(UserContext user, @Nullable ServerWorld world, String group) {
+
+            }
+
+            @Override
+            public PermissionValue checkGroup(String group, @Nullable ServerWorld world, String permission) {
                 return PermissionValue.DEFAULT;
             }
 
             @Override
-            public List<String> getGroupPermissions(String group, @Nullable ServerWorld world, PermissionValue value) {
+            public List<String> getListGroup(String group, @Nullable ServerWorld world, PermissionValue value) {
                 return Collections.EMPTY_LIST;
             }
 
             @Override
-            public List<String> getGroupPermissions(String group, String parentPermission, @Nullable ServerWorld world, PermissionValue value) {
+            public List<String> getListGroup(String group, String parentPermission, @Nullable ServerWorld world, PermissionValue value) {
                 return Collections.EMPTY_LIST;
             }
 
             @Override
-            public List<String> getGroupSpecificPermissions(String group, @Nullable ServerWorld world, PermissionValue value) {
+            public List<String> getListNonInheritedGroup(String group, @Nullable ServerWorld world, PermissionValue value) {
                 return Collections.EMPTY_LIST;
             }
 
             @Override
-            public List<String> getGroupSpecificPermissions(String group, String parentPermission, @Nullable ServerWorld world, PermissionValue value) {
+            public List<String> getListNonInheritedGroup(String group, String parentPermission, @Nullable ServerWorld world, PermissionValue value) {
                 return Collections.EMPTY_LIST;
             }
+
         };
     }
 }

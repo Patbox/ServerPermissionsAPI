@@ -1,13 +1,15 @@
 package eu.pb4.permissions.api;
 
 
-import com.mojang.authlib.GameProfile;
+import eu.pb4.permissions.api.context.UserContext;
 import net.minecraft.server.world.ServerWorld;
 import org.jetbrains.annotations.Nullable;
 
 import java.time.Duration;
+import java.util.ArrayList;
 import java.util.List;
 
+@SuppressWarnings({"unused"})
 public interface PermissionProvider {
     /**
      * Name of the provider
@@ -52,23 +54,65 @@ public interface PermissionProvider {
      * when any of child permission is true, PermissionValue.DEFAULT when doesn't exist
      * or PermissionValue.FALSE when negated
      *
-     * @param user       Player's GameProfile
-     * @param world      Current player's world (global and local permissions) or null (for global only)
+     * @param user       Player's UserContext
      * @param permission String of permission
      * @return Corresponding PermissionValue
      */
-    PermissionValue checkUserPermission(GameProfile user, @Nullable ServerWorld world, String permission);
+    PermissionValue check(UserContext user, String permission);
+
+    /**
+     * Checks value of player's permission
+     * By default, it checks only for single permission
+     * If requested permission ends with a wildcard (.*) it will return PermissionValue.TRUE
+     * when any of child permission is true, PermissionValue.DEFAULT when doesn't exist
+     * or PermissionValue.FALSE when negated
+     *
+     * @param user         Player's UserContext
+     * @param permission   String of permission
+     * @param defaultLevel Default otherwise required OP level
+     * @return Corresponding PermissionValue
+     */
+    default boolean check(UserContext user, String permission, int defaultLevel) {
+        return check(user, permission).allow(user.getPermissionLevel() >= defaultLevel);
+    }
+
+    /**
+     * Checks value of player's permission
+     * By default, it checks only for single permission
+     * If requested permission ends with a wildcard (.*) it will return PermissionValue.TRUE
+     * when any of child permission is true, PermissionValue.DEFAULT when doesn't exist
+     * or PermissionValue.FALSE when negated
+     *
+     * @param user         Player's UserContext
+     * @param permission   String of permission
+     * @param defaultValue If should be allowed by default
+     * @return Corresponding PermissionValue
+     */
+    default boolean check(UserContext user, String permission, boolean defaultValue) {
+        return check(user, permission).allow(defaultValue);
+    }
 
     /**
      * Gets list of all permissions of player with value of PermissionValue.TRUE
      * Ordered from most to least significant
      *
-     * @param user  Player's GameProfile
-     * @param world Current player's world (global and local permissions) or null (for global only)
+     * @param user  Player's UserContext
      * @return List of permissions
      */
-    default List<String> getUserPermissions(GameProfile user, @Nullable ServerWorld world) {
-        return this.getUserPermissions(user, world, PermissionValue.TRUE);
+    default List<String> getList(UserContext user) {
+        return this.getList(user, user.getWorld());
+    }
+
+    /**
+     * Gets list of all permissions of player with value of PermissionValue.TRUE
+     * Ordered from most to least significant
+     *
+     * @param user  Player's UserContext
+     * @param world World for check (returns global and local permissions) or null (for global only)
+     * @return List of permissions
+     */
+    default List<String> getList(UserContext user, @Nullable ServerWorld world) {
+        return this.getList(user, world, PermissionValue.TRUE);
     }
 
     /**
@@ -76,11 +120,23 @@ public interface PermissionProvider {
      * In case of PlaceholderValue.DEFAULT it returns ignores value
      * Ordered from most to least significant
      *
-     * @param user  Player's GameProfile
-     * @param world Current player's world (global and local permissions) or null (for global only)
+     * @param user  Player's UserContext
      * @return List of permissions
      */
-    List<String> getUserPermissions(GameProfile user, @Nullable ServerWorld world, PermissionValue value);
+    default List<String> getList(UserContext user, PermissionValue value) {
+        return this.getList(user, user.getWorld(), value);
+    }
+
+    /**
+     * Gets list of all permissions of player with provided value
+     * In case of PlaceholderValue.DEFAULT it returns ignores value
+     * Ordered from most to least significant
+     *
+     * @param user  Player's UserContext
+     * @param world World for check (returns global and local permissions) or null (for global only)
+     * @return List of permissions
+     */
+    List<String> getList(UserContext user, @Nullable ServerWorld world, PermissionValue value);
 
     /**
      * Gets list of all permissions of player with value of PermissionValue.TRUE
@@ -88,13 +144,27 @@ public interface PermissionProvider {
      * Returned permissions have their parent string removed.
      * Ordered from most to least significant
      *
-     * @param user  Player's GameProfile
+     * @param user             Player's UserContext
      * @param parentPermission Parent permission
-     * @param world Current player's world (global and local permissions) or null (for global only)
      * @return List of permissions
      */
-    default List<String> getUserPermissions(GameProfile user, String parentPermission, @Nullable ServerWorld world) {
-        return this.getUserPermissions(user, parentPermission, world, PermissionValue.TRUE);
+    default List<String> getList(UserContext user, String parentPermission) {
+        return this.getList(user, parentPermission, user.getWorld());
+    }
+
+    /**
+     * Gets list of all permissions of player with value of PermissionValue.TRUE
+     * and are child of specified permission.
+     * Returned permissions have their parent string removed.
+     * Ordered from most to least significant
+     *
+     * @param user             Player's UserContext
+     * @param parentPermission Parent permission
+     * @param world            World for check (returns global and local permissions) or null (for global only)
+     * @return List of permissions
+     */
+    default List<String> getList(UserContext user, String parentPermission, @Nullable ServerWorld world) {
+        return this.getList(user, parentPermission, world, PermissionValue.TRUE);
     }
 
     /**
@@ -104,24 +174,51 @@ public interface PermissionProvider {
      * In case of PlaceholderValue.DEFAULT it returns ignores value
      * Ordered from most to least significant
      *
-     * @param user  Player's GameProfile
+     * @param user             Player's UserContext
      * @param parentPermission Parent permission
-     * @param world Current player's world (global and local permissions) or null (for global only)
      * @return List of permissions
      */
-    List<String> getUserPermissions(GameProfile user, String parentPermission, @Nullable ServerWorld world, PermissionValue value);
+    default List<String> getList(UserContext user, String parentPermission,  PermissionValue value) {
+        return this.getList(user, parentPermission, user.getWorld(), value);
+    }
+
+    /**
+     * Gets list of all permissions of player with provided value
+     * and are child of specified permission.
+     * Returned permissions have their parent string removed.
+     * In case of PlaceholderValue.DEFAULT it returns ignores value
+     * Ordered from most to least significant
+     *
+     * @param user             Player's UserContext
+     * @param parentPermission Parent permission
+     * @param world            World for check (returns global and local permissions) or null (for global only)
+     * @return List of permissions
+     */
+    List<String> getList(UserContext user, String parentPermission, @Nullable ServerWorld world, PermissionValue value);
 
     /**
      * Gets List of permissions of player, that aren't inherited from groups
      * and have value of PermissionValue.TRUE
      * Ordered from most to least significant
      *
-     * @param user  Player's GameProfile
-     * @param world Current player's world (global and local permissions) or null (for global only)
+     * @param user  Player's UserContext
      * @return List of permissions
      */
-    default List<String> getUserSpecificPermissions(GameProfile user, @Nullable ServerWorld world) {
-        return this.getUserSpecificPermissions(user, world, PermissionValue.TRUE);
+    default List<String> getListNonInherited(UserContext user) {
+        return this.getListNonInherited(user, user.getWorld());
+    }
+
+    /**
+     * Gets List of permissions of player, that aren't inherited from groups
+     * and have value of PermissionValue.TRUE
+     * Ordered from most to least significant
+     *
+     * @param user  Player's UserContext
+     * @param world World for check (returns global and local permissions) or null (for global only)
+     * @return List of permissions
+     */
+    default List<String> getListNonInherited(UserContext user, @Nullable ServerWorld world) {
+        return this.getListNonInherited(user, world, PermissionValue.TRUE);
     }
 
     /**
@@ -129,12 +226,25 @@ public interface PermissionProvider {
      * In case of PlaceholderValue.DEFAULT, it returns all permissions
      * Ordered from most to least significant
      *
-     * @param user  Player's GameProfile
-     * @param world Current player's world (global and local permissions) or null (for global only)
+     * @param user  Player's UserContext
      * @param value Value of permission
      * @return List of permissions
      */
-    List<String> getUserSpecificPermissions(GameProfile user, @Nullable ServerWorld world, PermissionValue value);
+    default List<String> getListNonInherited(UserContext user, PermissionValue value) {
+        return this.getListNonInherited(user, user.getWorld(), value);
+    }
+
+    /**
+     * Gets List of permissions of player, that aren't inherited from groups
+     * In case of PlaceholderValue.DEFAULT, it returns all permissions
+     * Ordered from most to least significant
+     *
+     * @param user  Player's UserContext
+     * @param world World for check (returns global and local permissions) or null (for global only)
+     * @param value Value of permission
+     * @return List of permissions
+     */
+    List<String> getListNonInherited(UserContext user, @Nullable ServerWorld world, PermissionValue value);
 
     /**
      * Gets list of all permissions of player with value of PermissionValue.TRUE, that aren't inherited from groups
@@ -142,13 +252,27 @@ public interface PermissionProvider {
      * Returned permissions have their parent string removed.
      * Ordered from most to least significant
      *
-     * @param user  Player's GameProfile
+     * @param user             Player's UserContext
      * @param parentPermission Parent permission
-     * @param world Current player's world (global and local permissions) or null (for global only)
      * @return List of permissions
      */
-    default List<String> getUserSpecificPermissions(GameProfile user, String parentPermission, @Nullable ServerWorld world) {
-        return this.getUserSpecificPermissions(user, parentPermission, world, PermissionValue.TRUE);
+    default List<String> getListNonInherited(UserContext user, String parentPermission) {
+        return this.getListNonInherited(user, parentPermission, user.getWorld());
+    }
+
+    /**
+     * Gets list of all permissions of player with value of PermissionValue.TRUE, that aren't inherited from groups
+     * and are child of specified permission.
+     * Returned permissions have their parent string removed.
+     * Ordered from most to least significant
+     *
+     * @param user             Player's UserContext
+     * @param parentPermission Parent permission
+     * @param world            World for check (returns global and local permissions) or null (for global only)
+     * @return List of permissions
+     */
+    default List<String> getListNonInherited(UserContext user, String parentPermission, @Nullable ServerWorld world) {
+        return this.getListNonInherited(user, parentPermission, world, PermissionValue.TRUE);
     }
 
     /**
@@ -158,69 +282,193 @@ public interface PermissionProvider {
      * In case of PlaceholderValue.DEFAULT it returns ignores value
      * Ordered from most to least significant
      *
-     * @param user  Player's GameProfile
+     * @param user             Player's UserContext
      * @param parentPermission Parent permission
-     * @param world Current player's world (global and local permissions) or null (for global only)
      * @return List of permissions
      */
-    List<String> getUserSpecificPermissions(GameProfile user, String parentPermission, @Nullable ServerWorld world, PermissionValue value);
+    default List<String> getListNonInherited(UserContext user, String parentPermission, PermissionValue value) {
+        return this.getListNonInherited(user, parentPermission, user.getWorld(), value);
+    }
+
+    /**
+     * Gets list of all permissions of player with provided value, that aren't inherited from groups
+     * and are child of specified permission.
+     * Returned permissions have their parent string removed.
+     * In case of PlaceholderValue.DEFAULT it returns ignores value
+     * Ordered from most to least significant
+     *
+     * @param user             Player's UserContext
+     * @param parentPermission Parent permission
+     * @param world            World for check (returns global and local permissions) or null (for global only)
+     * @return List of permissions
+     */
+    List<String> getListNonInherited(UserContext user, String parentPermission, @Nullable ServerWorld world, PermissionValue value);
+
+    /**
+     * This methods tries to read permission as value with usage of provided adapter.
+     * Value permission needs to be set to PermissionValue.TRUE and have format of
+     * `permission.value`
+     *
+     * @param user User permission is checked for
+     * @param permission Base permission
+     * @param defaultValue Default value if not provided
+     * @param adapter Default value adapter
+     * @return Highest value;
+     */
+    default <V> V getValue(UserContext user, String permission, V defaultValue, ValueAdapter<V> adapter) {
+        return getValueFrom(this.getList(user, permission, user.getWorld()), defaultValue, adapter);
+    }
+
+    /**
+     * This methods tries to read permission as value with usage of provided adapter.
+     * Value permission needs to be set to PermissionValue.TRUE and have format of
+     * `permission.value`
+     *
+     * @param user User permission is checked for
+     * @param permission Base permission
+     * @param world            World for check (returns global and local permissions) or null (for global only)
+     * @param defaultValue Default value if not provided
+     * @param adapter Default value adapter
+     * @return Highest value;
+     */
+    default <V> V getValue(UserContext user, String permission, @Nullable ServerWorld world, V defaultValue, ValueAdapter<V> adapter) {
+        return getValueFrom(this.getList(user, permission, world), defaultValue, adapter);
+    }
 
     /**
      * Sets value of player's placeholder to provided one
      * In case of PlaceholderValue.DEFAULT, it gets removed from player
      *
-     * @param user  Player's GameProfile
-     * @param world Current player's world (global and local permissions) or null (for global only)
+     * @param user  Player's UserContext
      * @param value Value of permission, DEFAULT removes it
      */
-    void setUserPermission(GameProfile user, @Nullable ServerWorld world, PermissionValue value);
+    default void set(UserContext user, PermissionValue value) {
+        this.set(user, null, value);
+    }
+
+    /**
+     * Sets value of player's placeholder to provided one
+     * In case of PlaceholderValue.DEFAULT, it gets removed from player
+     *
+     * @param user  Player's UserContext
+     * @param world Permission world (local permission) or null (for global)
+     * @param value Value of permission, DEFAULT removes it
+     */
+    void set(UserContext user, @Nullable ServerWorld world, PermissionValue value);
 
     /**
      * Sets value of player's placeholder to provided one with specific duration
      * In case of PlaceholderValue.DEFAULT, it gets removed from player
      *
-     * @param user     Player's GameProfile
-     * @param world    Current player's world (global and local permissions) or null (for global only)
+     * @param user     Player's UserContext
      * @param value    Value of permission, DEFAULT removes it
      * @param duration Duration of permission
      */
-    void setUserPermission(GameProfile user, @Nullable ServerWorld world, PermissionValue value, Duration duration);
+    default void set(UserContext user, PermissionValue value, Duration duration) {
+        this.set(user, null, value, duration);
+    }
+
+    /**
+     * Sets value of player's placeholder to provided one with specific duration
+     * In case of PlaceholderValue.DEFAULT, it gets removed from player
+     *
+     * @param user     Player's UserContext
+     * @param world    Permission world (local permission) or null (for global)
+     * @param value    Value of permission, DEFAULT removes it
+     * @param duration Duration of permission
+     */
+    void set(UserContext user, @Nullable ServerWorld world, PermissionValue value, Duration duration);
 
     /**
      * Gets list of groups player is in. Ordered from most to least significant
      *
-     * @param user  Player's GameProfile
+     * @param user  Player's UserContext
+     * @return List of groups
+     */
+    default List<String> getGroups(UserContext user) {
+        return this.getGroups(user, user.getWorld());
+    }
+
+    /**
+     * Gets list of groups player is in. Ordered from most to least significant
+     *
+     * @param user  Player's UserContext
      * @param world Current player's world (global and local permissions) or null (for global only)
      * @return List of groups
      */
-    List<String> getUserGroups(GameProfile user, @Nullable ServerWorld world);
+    List<String> getGroups(UserContext user, @Nullable ServerWorld world);
 
     /**
      * Adds user to group
      *
-     * @param user  Player's GameProfile
-     * @param world Current world (for world only group) or null (for global)
+     * @param user  Player's UserContext
      * @param group Group's name
      */
-    void addUserGroup(GameProfile user, @Nullable ServerWorld world, String group);
+    default void addGroup(UserContext user, String group) {
+        this.addGroup(user, null, group);
+    }
+
+    /**
+     * Adds user to group
+     *
+     * @param user  Player's UserContext
+     * @param world Permission world (local group) or null (for global)
+     * @param group Group's name
+     */
+    void addGroup(UserContext user, @Nullable ServerWorld world, String group);
 
     /**
      * Adds user to group for specified duration
      *
-     * @param user  Player's GameProfile
-     * @param world Current world (for world only group) or null (for global)
+     * @param user  Player's UserContext
      * @param group Group's name
      */
-    void addUserGroup(GameProfile user, @Nullable ServerWorld world, String group, Duration duration);
+    default void addGroup(UserContext user, String group, Duration duration) {
+        this.addGroup(user, null, group, duration);
+    }
+
+    /**
+     * Adds user to group for specified duration
+     *
+     * @param user  Player's UserContext
+     * @param world Permission world (local group) or null (for global)
+     * @param group Group's name
+     */
+    void addGroup(UserContext user, @Nullable ServerWorld world, String group, Duration duration);
 
     /**
      * Remove user from group
      *
-     * @param user  Player's GameProfile
-     * @param world Current world (for world only group) or null (for global)
+     * @param user  Player's UserContext
      * @param group Group's name
      */
-    void removeUserGroup(GameProfile user, @Nullable ServerWorld world, String group);
+    default void removeGroup(UserContext user, String group) {
+        this.removeGroup(user, null, group);
+    }
+
+    /**
+     * Remove user from group
+     *
+     * @param user  Player's UserContext
+     * @param world Permission world (local group) or null (for global)
+     * @param group Group's name
+     */
+    void removeGroup(UserContext user, @Nullable ServerWorld world, String group);
+
+    /**
+     * Checks value of group's permission
+     * By default, it checks only for single permission
+     * If requested permission ends with a wildcard (.*) it will return PermissionValue.TRUE
+     * when any of child permission is true, PermissionValue.DEFAULT when doesn't exist
+     * or PermissionValue.FALSE when negated
+     *
+     * @param group      Group's name
+     * @param permission String of permission
+     * @return Corresponding PermissionValue
+     */
+    default PermissionValue checkGroup(String group, String permission) {
+        return this.checkGroup(group, null, permission);
+    }
 
     /**
      * Checks value of group's permission
@@ -234,7 +482,18 @@ public interface PermissionProvider {
      * @param permission String of permission
      * @return Corresponding PermissionValue
      */
-    PermissionValue checkGroupPermission(String group, @Nullable ServerWorld world, String permission);
+    PermissionValue checkGroup(String group, @Nullable ServerWorld world, String permission);
+
+    /**
+     * Gets list of all permissions of group with PermissionValue.TRUE
+     * Ordered from most to least significant
+     *
+     * @param group Group's name
+     * @return List of permissions
+     */
+    default List<String> getListGroup(String group) {
+        return this.getListGroup(group, (ServerWorld) null);
+    }
 
     /**
      * Gets list of all permissions of group with PermissionValue.TRUE
@@ -244,8 +503,21 @@ public interface PermissionProvider {
      * @param world Current world (global and local permissions) or null (for global only)
      * @return List of permissions
      */
-    default List<String> getGroupPermissions(String group, @Nullable ServerWorld world) {
-        return this.getGroupPermissions(group, world, PermissionValue.TRUE);
+    default List<String> getListGroup(String group, @Nullable ServerWorld world) {
+        return this.getListGroup(group, world, PermissionValue.TRUE);
+    }
+
+    /**
+     * Gets List of all permissions of group with specific value
+     * In case of PlaceholderValue.DEFAULT it returns ignores value and returns all
+     * Ordered from most to least significant
+     *
+     * @param group Group's name
+     * @param value Value of permission
+     * @return List of permissions
+     */
+    default List<String> getListGroup(String group, PermissionValue value) {
+        return this.getListGroup(group, (ServerWorld) null, value);
     }
 
     /**
@@ -258,7 +530,7 @@ public interface PermissionProvider {
      * @param value Value of permission
      * @return List of permissions
      */
-    List<String> getGroupPermissions(String group, @Nullable ServerWorld world, PermissionValue value);
+    List<String> getListGroup(String group, @Nullable ServerWorld world, PermissionValue value);
 
     /**
      * Gets list of all permissions of group with value of PermissionValue.TRUE
@@ -266,13 +538,27 @@ public interface PermissionProvider {
      * Returned permissions have their parent string removed.
      * Ordered from most to least significant
      *
-     * @param group Group's name
+     * @param group            Group's name
      * @param parentPermission Parent permission
-     * @param world Current player's world (global and local permissions) or null (for global only)
      * @return List of permissions
      */
-    default List<String> getGroupPermissions(String group, String parentPermission, @Nullable ServerWorld world) {
-        return this.getGroupPermissions(group, parentPermission, world, PermissionValue.TRUE);
+    default List<String> getListGroup(String group, String parentPermission) {
+        return this.getListGroup(group, parentPermission, null, PermissionValue.TRUE);
+    }
+
+    /**
+     * Gets list of all permissions of group with value of PermissionValue.TRUE
+     * and are child of specified permission.
+     * Returned permissions have their parent string removed.
+     * Ordered from most to least significant
+     *
+     * @param group            Group's name
+     * @param parentPermission Parent permission
+     * @param world            Current player's world (global and local permissions) or null (for global only)
+     * @return List of permissions
+     */
+    default List<String> getListGroup(String group, String parentPermission, @Nullable ServerWorld world) {
+        return this.getListGroup(group, parentPermission, world, PermissionValue.TRUE);
     }
 
     /**
@@ -282,12 +568,39 @@ public interface PermissionProvider {
      * In case of PlaceholderValue.DEFAULT it returns ignores value
      * Ordered from most to least significant
      *
-     * @param group Group's name
+     * @param group            Group's name
      * @param parentPermission Parent permission
-     * @param world Current player's world (global and local permissions) or null (for global only)
      * @return List of permissions
      */
-    List<String> getGroupPermissions(String group, String parentPermission, @Nullable ServerWorld world, PermissionValue value);
+    default List<String> getListGroup(String group, String parentPermission, PermissionValue value) {
+        return this.getListGroup(group, parentPermission, null, value);
+    }
+
+    /**
+     * Gets list of all permissions of group with provided value
+     * and are child of specified permission.
+     * Returned permissions have their parent string removed.
+     * In case of PlaceholderValue.DEFAULT it returns ignores value
+     * Ordered from most to least significant
+     *
+     * @param group            Group's name
+     * @param parentPermission Parent permission
+     * @param world            Current player's world (global and local permissions) or null (for global only)
+     * @return List of permissions
+     */
+    List<String> getListGroup(String group, String parentPermission, @Nullable ServerWorld world, PermissionValue value);
+
+    /**
+     * Gets List of permissions of group, that aren't inherited from other groups
+     * and have value of PermissionValue.TRUE
+     * Ordered from most to least significant
+     *
+     * @param group Group's name
+     * @return List of permissions
+     */
+    default List<String> getListNonInheritedGroup(String group) {
+        return this.getListNonInheritedGroup(group, (ServerWorld) null);
+    }
 
     /**
      * Gets List of permissions of group, that aren't inherited from other groups
@@ -298,8 +611,21 @@ public interface PermissionProvider {
      * @param world Current world (global and local permissions) or null (for global only)
      * @return List of permissions
      */
-    default List<String> getGroupSpecificPermissions(String group, @Nullable ServerWorld world) {
-        return this.getGroupSpecificPermissions(group, world, PermissionValue.TRUE);
+    default List<String> getListNonInheritedGroup(String group, @Nullable ServerWorld world) {
+        return this.getListNonInheritedGroup(group, world, PermissionValue.TRUE);
+    }
+
+    /**
+     * Gets List of permissions of player, that aren't inherited from other groups
+     * In case of PlaceholderValue.DEFAULT, it returns all permissions
+     * Ordered from most to least significant
+     *
+     * @param group Group's name
+     * @param value Value of permission
+     * @return List of permissions
+     */
+    default List<String> getListNonInheritedGroup(String group, PermissionValue value) {
+        return this.getListNonInheritedGroup(group, (ServerWorld) null, value);
     }
 
     /**
@@ -312,7 +638,7 @@ public interface PermissionProvider {
      * @param value Value of permission
      * @return List of permissions
      */
-    List<String> getGroupSpecificPermissions(String group, @Nullable ServerWorld world, PermissionValue value);
+    List<String> getListNonInheritedGroup(String group, @Nullable ServerWorld world, PermissionValue value);
 
     /**
      * Gets list of all permissions of group with value of PermissionValue.TRUE, that aren't inherited from other groups
@@ -320,13 +646,27 @@ public interface PermissionProvider {
      * Returned permissions have their parent string removed.
      * Ordered from most to least significant
      *
-     * @param group Group's name
+     * @param group            Group's name
      * @param parentPermission Parent permission
-     * @param world Current player's world (global and local permissions) or null (for global only)
      * @return List of permissions
      */
-    default List<String> getGroupSpecificPermissions(String group, String parentPermission, @Nullable ServerWorld world) {
-        return this.getGroupSpecificPermissions(group, parentPermission, world, PermissionValue.TRUE);
+    default List<String> getListNonInheritedGroup(String group, String parentPermission) {
+        return this.getListNonInheritedGroup(group, parentPermission, null, PermissionValue.TRUE);
+    }
+
+    /**
+     * Gets list of all permissions of group with value of PermissionValue.TRUE, that aren't inherited from other groups
+     * and are child of specified permission.
+     * Returned permissions have their parent string removed.
+     * Ordered from most to least significant
+     *
+     * @param group            Group's name
+     * @param parentPermission Parent permission
+     * @param world            Current player's world (global and local permissions) or null (for global only)
+     * @return List of permissions
+     */
+    default List<String> getListNonInheritedGroup(String group, String parentPermission, @Nullable ServerWorld world) {
+        return this.getListNonInheritedGroup(group, parentPermission, world, PermissionValue.TRUE);
     }
 
     /**
@@ -336,10 +676,40 @@ public interface PermissionProvider {
      * In case of PlaceholderValue.DEFAULT it returns ignores value
      * Ordered from most to least significant
      *
-     * @param group Group's name
+     * @param group            Group's name
      * @param parentPermission Parent permission
-     * @param world Current player's world (global and local permissions) or null (for global only)
      * @return List of permissions
      */
-    List<String> getGroupSpecificPermissions(String group, String parentPermission, @Nullable ServerWorld world, PermissionValue value);
+    default List<String> getListNonInheritedGroup(String group, String parentPermission, PermissionValue value) {
+        return this.getListNonInheritedGroup(group, parentPermission, null, value);
+    }
+
+    /**
+     * Gets list of all permissions of group with provided value, that aren't inherited from other groups
+     * and are child of specified permission.
+     * Returned permissions have their parent string removed.
+     * In case of PlaceholderValue.DEFAULT it returns ignores value
+     * Ordered from most to least significant
+     *
+     * @param group            Group's name
+     * @param parentPermission Parent permission
+     * @param world            Current player's world (global and local permissions) or null (for global only)
+     * @return List of permissions
+     */
+    List<String> getListNonInheritedGroup(String group, String parentPermission, @Nullable ServerWorld world, PermissionValue value);
+
+
+    static <V> V getValueFrom(List<String> permissions, V defaultValue, ValueAdapter<V> adapter) {
+        List<V> list = new ArrayList<>();
+        list.add(defaultValue);
+        for (String s : permissions) {
+            V val = adapter.create(s);
+            if (val != null) {
+                list.add(val);
+            }
+        }
+        list.sort(adapter::sort);
+
+        return list.get(0);
+    }
 }

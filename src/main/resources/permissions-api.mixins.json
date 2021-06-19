@@ -4,7 +4,9 @@
   "package": "eu.pb4.permissions.mixin",
   "compatibilityLevel": "JAVA_16",
   "mixins": [
-    "MinecraftServerMixin"
+    "EntityAccessor",
+    "MinecraftServerMixin",
+    "ServerCommandSourceAccessor"
   ],
   "injectors": {
     "defaultRequire": 1
