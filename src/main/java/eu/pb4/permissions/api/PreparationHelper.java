@@ -68,6 +68,8 @@ public final class PreparationHelper {
         }
 
         PermissionsAPIMod.LOGGER.info("Selected: " + selectedProvider.getName());
+        Permissions.DEFAULT_PROVIDER = selectedProvider;
+        Permissions.PROVIDERS.putAll(providerMap);
     }
 
     private static PermissionProvider createVanillaProvider(MinecraftServer server) {
