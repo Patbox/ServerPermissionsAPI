@@ -11,7 +11,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.UUID;
 
-record CommandSourceUserContext(ServerCommandSource source) implements UserContext {
+record CommandSourceUserContext(ServerCommandSource source, ServerWorld world) implements UserContext {
     @Override
     public int getPermissionLevel() {
         return ((ServerCommandSourceAccessor) this.source).getPermissionLevel();
@@ -42,6 +42,6 @@ record CommandSourceUserContext(ServerCommandSource source) implements UserConte
     @Override
     public @Nullable
     ServerWorld getWorld() {
-        return this.source.getWorld();
+        return this.world;
     }
 }

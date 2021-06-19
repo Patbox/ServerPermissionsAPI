@@ -10,9 +10,8 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 
 import java.time.Duration;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @ApiStatus.Internal
 public final class PreparationHelper {
@@ -24,24 +23,51 @@ public final class PreparationHelper {
             return;
         }
         DONE = true;
-        PermissionProvider current = createVanillaProvider(server);
-        List<String> providersNames = new ArrayList<>();
-        Permissions.PROVIDERS.put("vanilla", current);
-        providersNames.add(current.getName());
+        HashMap<String, PermissionProvider> providerMap = new HashMap<>();
+
+        ArrayList<PermissionProvider> mainProvider = new ArrayList<>();
+        ArrayList<PermissionProvider> optionalProvider = new ArrayList<>();
+
         for (EntrypointContainer<PermissionProvider> container : FabricLoader.getInstance().getEntrypointContainers("permission-provider", PermissionProvider.class)) {
             try {
-                current = container.getEntrypoint();
-                Permissions.PROVIDERS.put(current.getIdentifier(), current);
-                providersNames.add(current.getName());
+                PermissionProvider provider = container.getEntrypoint();
+                providerMap.put(provider.getIdentifier(), provider);
 
+                switch (provider.getPriority()) {
+                    case MAIN -> mainProvider.add(provider);
+                    case OPTIONAL -> optionalProvider.add(provider);
+                }
             } catch (Exception e) {
                 e.printStackTrace();
             }
         }
-        Permissions.DEFAULT_PROVIDER = current;
+        PermissionProvider selectedProvider = null;
 
-        PermissionsAPIMod.LOGGER.info("Registered providers: " + String.join(", ", providersNames));
-        PermissionsAPIMod.LOGGER.info("Selected: " + current.getName());
+        if (mainProvider.size() > 0) {
+            PermissionsAPIMod.LOGGER.info(String.format("Registered main providers (%s): %s",
+                    mainProvider.size(),
+                    mainProvider.stream().map(provider -> String.format("%s (%s)", provider.getName(), provider.getIdentifier())).collect(Collectors.joining(", "))));
+            selectedProvider = mainProvider.get(0);
+            if (mainProvider.size() > 1) {
+                PermissionsAPIMod.LOGGER.warn("There are registered more than one main providers! This should be avoided if possible!");
+            }
+        }
+
+
+        if (optionalProvider.size() > 0) {
+            PermissionsAPIMod.LOGGER.info(String.format("Registered optional providers (%s): %s",
+                    optionalProvider.size(),
+                    optionalProvider.stream().map(provider -> String.format("%s (%s)", provider.getName(), provider.getIdentifier())).collect(Collectors.joining(", "))));
+            if (selectedProvider == null) {
+                selectedProvider = optionalProvider.get(0);
+            }
+        }
+
+        if (selectedProvider == null) {
+            selectedProvider = createVanillaProvider(server);
+        }
+
+        PermissionsAPIMod.LOGGER.info("Selected: " + selectedProvider.getName());
     }
 
     private static PermissionProvider createVanillaProvider(MinecraftServer server) {
@@ -54,6 +80,11 @@ public final class PreparationHelper {
             @Override
             public String getIdentifier() {
                 return "vanilla";
+            }
+
+            @Override
+            public Priority getPriority() {
+                return Priority.FALLBACK;
             }
 
             @Override
@@ -104,6 +135,26 @@ public final class PreparationHelper {
             @Override
             public List<String> getListNonInherited(UserContext user, String parentPermission, @Nullable ServerWorld world, PermissionValue value) {
                 return Collections.EMPTY_LIST;
+            }
+
+            @Override
+            public Map<String, PermissionValue> getAll(UserContext user, @Nullable ServerWorld world) {
+                return Collections.EMPTY_MAP;
+            }
+
+            @Override
+            public Map<String, PermissionValue> getAll(UserContext user, String parentPermission, @Nullable ServerWorld world) {
+                return Collections.EMPTY_MAP;
+            }
+
+            @Override
+            public Map<String, PermissionValue> getAllInherited(UserContext user, @Nullable ServerWorld world) {
+                return Collections.EMPTY_MAP;
+            }
+
+            @Override
+            public Map<String, PermissionValue> getAllInherited(UserContext user, String parentPermission, @Nullable ServerWorld world) {
+                return Collections.EMPTY_MAP;
             }
 
             @Override
@@ -159,6 +210,26 @@ public final class PreparationHelper {
             @Override
             public List<String> getListNonInheritedGroup(String group, String parentPermission, @Nullable ServerWorld world, PermissionValue value) {
                 return Collections.EMPTY_LIST;
+            }
+
+            @Override
+            public Map<String, PermissionValue> getAllGroup(String group, @Nullable ServerWorld world) {
+                return Collections.EMPTY_MAP;
+            }
+
+            @Override
+            public Map<String, PermissionValue> getAllGroup(String group, String parentPermission, @Nullable ServerWorld world) {
+                return Collections.EMPTY_MAP;
+            }
+
+            @Override
+            public Map<String, PermissionValue> getAllInheritedGroup(String group, @Nullable ServerWorld world) {
+                return Collections.EMPTY_MAP;
+            }
+
+            @Override
+            public Map<String, PermissionValue> getAllInheritedGroup(String group, String parentPermission, @Nullable ServerWorld world) {
+                return Collections.EMPTY_MAP;
             }
 
         };

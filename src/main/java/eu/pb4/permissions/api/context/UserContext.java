@@ -64,7 +64,39 @@ public interface UserContext {
      * @return UserContext of player
      */
     static UserContext of(ServerPlayerEntity player) {
-        return new PlayerUserContext(player);
+        return new PlayerUserContext(player, player.getServerWorld());
+    }
+
+    /**
+     * Creates UserContext from player's entity
+     *
+     * @param player ServerPlayerEntity
+     * @param world Targeted world
+     * @return UserContext of player
+     */
+    static UserContext of(ServerPlayerEntity player, ServerWorld world) {
+        return new PlayerUserContext(player, world);
+    }
+
+    /**
+     * Creates UserContext from game profile
+     *
+     * @param profile GameProfile
+     * @return UserContext of game profile
+     */
+    static UserContext of(GameProfile profile) {
+        return new GameProfileUserContext(profile, null);
+    }
+
+    /**
+     * Creates UserContext from game profile
+     *
+     * @param profile GameProfile
+     * @param world Targeted world
+     * @return UserContext of player
+     */
+    static UserContext of(GameProfile profile, ServerWorld world) {
+        return new GameProfileUserContext(profile, world);
     }
 
     /**
@@ -75,9 +107,23 @@ public interface UserContext {
      */
     static UserContext of(Entity entity) {
         if (entity instanceof ServerPlayerEntity player) {
-            return new PlayerUserContext(player);
+            return new PlayerUserContext(player, player.getServerWorld());
         }
-        return new EntityUserContext(entity);
+        return new EntityUserContext(entity, (ServerWorld) entity.getEntityWorld());
+    }
+
+    /**
+     * Creates UserContext from entity
+     *
+     * @param entity entity
+     * @param world Targeted world
+     * @return UserContext of entity
+     */
+    static UserContext of(Entity entity, ServerWorld world) {
+        if (entity instanceof ServerPlayerEntity player) {
+            return new PlayerUserContext(player, world);
+        }
+        return new EntityUserContext(entity, world);
     }
 
     /**
@@ -88,12 +134,31 @@ public interface UserContext {
      */
     static UserContext of(ServerCommandSource source) {
         try {
-            return new PlayerUserContext(source.getPlayer());
+            return new PlayerUserContext(source.getPlayer(), source.getWorld());
         } catch (Exception e) {
             try {
-                return new EntityUserContext(source.getEntityOrThrow());
+                return new EntityUserContext(source.getEntityOrThrow(), source.getWorld());
             } catch (Exception e1) {
-                return new CommandSourceUserContext(source);
+                return new CommandSourceUserContext(source, source.getWorld());
+            }
+        }
+    }
+
+    /**
+     * Creates UserContext from command source
+     *
+     * @param source ServerCommandSource
+     * @param world Targeted world
+     * @return UserContext of source
+     */
+    static UserContext of(ServerCommandSource source, ServerWorld world) {
+        try {
+            return new PlayerUserContext(source.getPlayer(), world);
+        } catch (Exception e) {
+            try {
+                return new EntityUserContext(source.getEntityOrThrow(), world);
+            } catch (Exception e1) {
+                return new CommandSourceUserContext(source, world);
             }
         }
     }

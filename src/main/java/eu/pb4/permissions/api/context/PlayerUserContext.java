@@ -9,7 +9,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.UUID;
 
-record PlayerUserContext(ServerPlayerEntity player) implements UserContext {
+record PlayerUserContext(ServerPlayerEntity player, ServerWorld world) implements UserContext {
 
     @Override
     public int getPermissionLevel() {
@@ -41,6 +41,6 @@ record PlayerUserContext(ServerPlayerEntity player) implements UserContext {
     @Override
     public @Nullable
     ServerWorld getWorld() {
-        return this.player.getServerWorld();
+        return this.world;
     }
 }

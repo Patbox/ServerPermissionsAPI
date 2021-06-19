@@ -3,14 +3,30 @@ package eu.pb4.permissions.api;
 
 import eu.pb4.permissions.api.context.UserContext;
 import net.minecraft.server.world.ServerWorld;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 @SuppressWarnings({"unused"})
 public interface PermissionProvider {
+    static <V> V getValueFrom(List<String> permissions, V defaultValue, ValueAdapter<V> adapter) {
+        List<V> list = new ArrayList<>();
+        list.add(defaultValue);
+        for (String s : permissions) {
+            V val = adapter.create(s);
+            if (val != null) {
+                list.add(val);
+            }
+        }
+        list.sort(adapter::sort);
+
+        return list.get(0);
+    }
+
     /**
      * Name of the provider
      */
@@ -46,6 +62,10 @@ public interface PermissionProvider {
      */
     boolean supportsPerWorldGroups();
 
+    /**
+     * Returns true, if this Permission should be a candidate for being default
+     */
+    Priority getPriority();
 
     /**
      * Checks value of player's permission
@@ -96,7 +116,7 @@ public interface PermissionProvider {
      * Gets list of all permissions of player with value of PermissionValue.TRUE
      * Ordered from most to least significant
      *
-     * @param user  Player's UserContext
+     * @param user Player's UserContext
      * @return List of permissions
      */
     default List<String> getList(UserContext user) {
@@ -120,7 +140,7 @@ public interface PermissionProvider {
      * In case of PlaceholderValue.DEFAULT it returns ignores value
      * Ordered from most to least significant
      *
-     * @param user  Player's UserContext
+     * @param user Player's UserContext
      * @return List of permissions
      */
     default List<String> getList(UserContext user, PermissionValue value) {
@@ -178,7 +198,7 @@ public interface PermissionProvider {
      * @param parentPermission Parent permission
      * @return List of permissions
      */
-    default List<String> getList(UserContext user, String parentPermission,  PermissionValue value) {
+    default List<String> getList(UserContext user, String parentPermission, PermissionValue value) {
         return this.getList(user, parentPermission, user.getWorld(), value);
     }
 
@@ -201,7 +221,7 @@ public interface PermissionProvider {
      * and have value of PermissionValue.TRUE
      * Ordered from most to least significant
      *
-     * @param user  Player's UserContext
+     * @param user Player's UserContext
      * @return List of permissions
      */
     default List<String> getListNonInherited(UserContext user) {
@@ -305,14 +325,110 @@ public interface PermissionProvider {
     List<String> getListNonInherited(UserContext user, String parentPermission, @Nullable ServerWorld world, PermissionValue value);
 
     /**
+     * Gets map of all permissions with their values for user
+     * Should be ordered from most to least significant
+     *
+     * @param user Player's UserContext
+     * @return Map of permissions and values
+     */
+    default Map<String, PermissionValue> getAll(UserContext user) {
+        return this.getAll(user, user.getWorld());
+    }
+
+    /**
+     * Gets map of all permissions with their values for user
+     * Should be ordered from most to least significant
+     *
+     * @param user  Player's UserContext
+     * @param world World for check (returns global and local permissions) or null (for global only)
+     * @return Map of permissions and values
+     */
+    Map<String, PermissionValue> getAll(UserContext user, @Nullable ServerWorld world);
+
+    /**
+     * Gets map of all permissions with their values for user
+     * and are child of specified permission.
+     * Returned permissions have their parent string removed.
+     * Should be ordered from most to least significant
+     *
+     * @param user             Player's UserContext
+     * @param parentPermission Parent permission
+     * @return Map of permissions and values
+     */
+    default Map<String, PermissionValue> getAll(UserContext user, String parentPermission) {
+        return this.getAll(user, parentPermission, user.getWorld());
+    }
+
+    /**
+     * Gets map of all permissions with their values for user
+     * and are child of specified permission.
+     * Returned permissions have their parent string removed.
+     * Should be ordered from most to least significant
+     *
+     * @param user             Player's UserContext
+     * @param parentPermission Parent permission
+     * @param world            World for check (returns global and local permissions) or null (for global only)
+     * @return Map of permissions and values
+     */
+    Map<String, PermissionValue> getAll(UserContext user, String parentPermission, @Nullable ServerWorld world);
+
+    /**
+     * Gets map of all non inherited permissions with their values for user
+     * Should be ordered from most to least significant
+     *
+     * @param user Player's UserContext
+     * @return Map of permissions and values
+     */
+    default Map<String, PermissionValue> getAllNonInherited(UserContext user) {
+        return this.getAllInherited(user, user.getWorld());
+    }
+
+    /**
+     * Gets map of all non inherited permissions with their values for user
+     * Should be ordered from most to least significant
+     *
+     * @param user  Player's UserContext
+     * @param world World for check (returns global and local permissions) or null (for global only)
+     * @return Map of permissions and values
+     */
+    Map<String, PermissionValue> getAllInherited(UserContext user, @Nullable ServerWorld world);
+
+    /**
+     * Gets map of all non inherited permissions with their values for user
+     * and are child of specified permission.
+     * Returned permissions have their parent string removed.
+     * Should be ordered from most to least significant
+     *
+     * @param user             Player's UserContext
+     * @param parentPermission Parent permission
+     * @return Map of permissions and values
+     */
+    default Map<String, PermissionValue> getAllNonInherited(UserContext user, String parentPermission) {
+        return this.getAllInherited(user, user.getWorld());
+    }
+
+    /**
+     * Gets map of all non inherited permissions with their values for user
+     * and are child of specified permission.
+     * Returned permissions have their parent string removed.
+     * Should be ordered from most to least significant
+     *
+     * @param user             Player's UserContext
+     * @param parentPermission Parent permission
+     * @param world            World for check (returns global and local permissions) or null (for global only)
+     * @return Map of permissions and values
+     */
+    Map<String, PermissionValue> getAllInherited(UserContext user, String parentPermission, @Nullable ServerWorld world);
+
+    /**
      * This methods tries to read permission as value with usage of provided adapter.
      * Value permission needs to be set to PermissionValue.TRUE and have format of
      * `permission.value`
      *
-     * @param user User permission is checked for
-     * @param permission Base permission
+     * @param user         User permission is checked for
+     * @param permission   Base permission
      * @param defaultValue Default value if not provided
-     * @param adapter Default value adapter
+     * @param adapter      Default value adapter
      * @return Highest value;
      */
     default <V> V getValue(UserContext user, String permission, V defaultValue, ValueAdapter<V> adapter) {
@@ -324,15 +440,46 @@ public interface PermissionProvider {
      * Value permission needs to be set to PermissionValue.TRUE and have format of
      * `permission.value`
      *
-     * @param user User permission is checked for
-     * @param permission Base permission
-     * @param world            World for check (returns global and local permissions) or null (for global only)
+     * @param user         User permission is checked for
+     * @param permission   Base permission
+     * @param world        World for check (returns global and local permissions) or null (for global only)
      * @param defaultValue Default value if not provided
-     * @param adapter Default value adapter
+     * @param adapter      Default value adapter
      * @return Highest value;
      */
     default <V> V getValue(UserContext user, String permission, @Nullable ServerWorld world, V defaultValue, ValueAdapter<V> adapter) {
         return getValueFrom(this.getList(user, permission, world), defaultValue, adapter);
+    }
+
+    /**
+     * This methods tries to read non inherited permission as value with usage of provided adapter.
+     * Value permission needs to be set to PermissionValue.TRUE and have format of
+     * `permission.value`
+     *
+     * @param user         User permission is checked for
+     * @param permission   Base permission
+     * @param defaultValue Default value if not provided
+     * @param adapter      Default value adapter
+     * @return Highest value;
+     */
+    default <V> V getValueNonInherited(UserContext user, String permission, V defaultValue, ValueAdapter<V> adapter) {
+        return getValueFrom(this.getListNonInherited(user, permission, user.getWorld()), defaultValue, adapter);
+    }
+
+    /**
+     * This methods tries to read permission as value with usage of provided adapter.
+     * Value permission needs to be set to PermissionValue.TRUE and have format of
+     * `permission.value`
+     *
+     * @param user         User permission is checked for
+     * @param permission   Base permission
+     * @param world        World for check (returns global and local permissions) or null (for global only)
+     * @param defaultValue Default value if not provided
+     * @param adapter      Default value adapter
+     * @return Highest value;
+     */
+    default <V> V getValueNonInherited(UserContext user, String permission, @Nullable ServerWorld world, V defaultValue, ValueAdapter<V> adapter) {
+        return getValueFrom(this.getListNonInherited(user, permission, world), defaultValue, adapter);
     }
 
     /**
@@ -382,7 +529,7 @@ public interface PermissionProvider {
     /**
      * Gets list of groups player is in. Ordered from most to least significant
      *
-     * @param user  Player's UserContext
+     * @param user Player's UserContext
      * @return List of groups
      */
     default List<String> getGroups(UserContext user) {
@@ -698,18 +845,179 @@ public interface PermissionProvider {
      */
     List<String> getListNonInheritedGroup(String group, String parentPermission, @Nullable ServerWorld world, PermissionValue value);
 
+    /**
+     * Gets map of all permissions with their values for group
+     * Should be ordered from most to least significant
+     *
+     * @param group Group's name
+     * @return Map of permissions and values
+     */
+    default Map<String, PermissionValue> getAllGroup(String group) {
+        return this.getAllGroup(group, (ServerWorld) null);
+    }
 
-    static <V> V getValueFrom(List<String> permissions, V defaultValue, ValueAdapter<V> adapter) {
-        List<V> list = new ArrayList<>();
-        list.add(defaultValue);
-        for (String s : permissions) {
-            V val = adapter.create(s);
-            if (val != null) {
-                list.add(val);
-            }
-        }
-        list.sort(adapter::sort);
+    /**
+     * Gets map of all permissions with their values for group
+     * Should be ordered from most to least significant
+     *
+     * @param group Group's name
+     * @param world World for check (returns global and local permissions) or null (for global only)
+     * @return Map of permissions and values
+     */
+    Map<String, PermissionValue> getAllGroup(String group, @Nullable ServerWorld world);
 
-        return list.get(0);
+    /**
+     * Gets map of all permissions with their values for group
+     * and are child of specified permission.
+     * Returned permissions have their parent string removed.
+     * Should be ordered from most to least significant
+     *
+     * @param group            Group's name
+     * @param parentPermission Parent permission
+     * @return Map of permissions and values
+     */
+    default Map<String, PermissionValue> getAllGroup(String group, String parentPermission) {
+        return this.getAllGroup(group, parentPermission, null);
+    }
+
+    /**
+     * Gets map of all permissions with their values for group
+     * and are child of specified permission.
+     * Returned permissions have their parent string removed.
+     * Should be ordered from most to least significant
+     *
+     * @param group            Group's name
+     * @param parentPermission Parent permission
+     * @param world            World for check (returns global and local permissions) or null (for global only)
+     * @return Map of permissions and values
+     */
+    Map<String, PermissionValue> getAllGroup(String group, String parentPermission, @Nullable ServerWorld world);
+
+    /**
+     * Gets map of all non inherited permissions with their values for group
+     * Should be ordered from most to least significant
+     *
+     * @param group Group's name
+     * @return Map of permissions and values
+     */
+    default Map<String, PermissionValue> getAllNonInheritedGroup(String group) {
+        return this.getAllInheritedGroup(group, null);
+    }
+
+    /**
+     * Gets map of all non inherited permissions with their values for group
+     * Should be ordered from most to least significant
+     *
+     * @param group Group's name
+     * @param world World for check (returns global and local permissions) or null (for global only)
+     * @return Map of permissions and values
+     */
+    Map<String, PermissionValue> getAllInheritedGroup(String group, @Nullable ServerWorld world);
+
+    /**
+     * Gets map of all non inherited permissions with their values for group
+     * and are child of specified permission.
+     * Returned permissions have their parent string removed.
+     * Should be ordered from most to least significant
+     *
+     * @param group            Group's name
+     * @param parentPermission Parent permission
+     * @return Map of permissions and values
+     */
+    default Map<String, PermissionValue> getAllNonInheritedGroup(String group, String parentPermission) {
+        return this.getAllInheritedGroup(group, null);
+    }
+
+    /**
+     * Gets map of all non inherited permissions with their values for group
+     * and are child of specified permission.
+     * Returned permissions have their parent string removed.
+     * Should be ordered from most to least significant
+     *
+     * @param group            Group's name
+     * @param parentPermission Parent permission
+     * @param world            World for check (returns global and local permissions) or null (for global only)
+     * @return Map of permissions and values
+     */
+    Map<String, PermissionValue> getAllInheritedGroup(String group, String parentPermission, @Nullable ServerWorld world);
+
+    /**
+     * This methods tries to read permission as value with usage of provided adapter.
+     * Value permission needs to be set to PermissionValue.TRUE and have format of
+     * `permission.value`
+     *
+     * @param group        Group's name permission is checked for
+     * @param permission   Base permission
+     * @param defaultValue Default value if not provided
+     * @param adapter      Default value adapter
+     * @return Highest value;
+     */
+    default <V> V getValueGroup(String group, String permission, V defaultValue, ValueAdapter<V> adapter) {
+        return getValueFrom(this.getListGroup(group, permission, (ServerWorld) null), defaultValue, adapter);
+    }
+
+    /**
+     * This methods tries to read permission as value with usage of provided adapter.
+     * Value permission needs to be set to PermissionValue.TRUE and have format of
+     * `permission.value`
+     *
+     * @param group        Group's name permission is checked for
+     * @param permission   Base permission
+     * @param world        World for check (returns global and local permissions) or null (for global only)
+     * @param defaultValue Default value if not provided
+     * @param adapter      Default value adapter
+     * @return Highest value;
+     */
+    default <V> V getValueGroup(String group, String permission, @Nullable ServerWorld world, V defaultValue, ValueAdapter<V> adapter) {
+        return getValueFrom(this.getListGroup(group, permission, world), defaultValue, adapter);
+    }
+
+    /**
+     * This methods tries to read non inherited permission as value with usage of provided adapter.
+     * Value permission needs to be set to PermissionValue.TRUE and have format of
+     * `permission.value`
+     *
+     * @param group        Group's name permission is checked for
+     * @param permission   Base permission
+     * @param defaultValue Default value if not provided
+     * @param adapter      Default value adapter
+     * @return Highest value;
+     */
+    default <V> V getValueNonInheritedGroup(String group, String permission, V defaultValue, ValueAdapter<V> adapter) {
+        return getValueFrom(this.getListNonInheritedGroup(group, permission, (ServerWorld) null), defaultValue, adapter);
+    }
+
+    /**
+     * This methods tries to read permission as value with usage of provided adapter.
+     * Value permission needs to be set to PermissionValue.TRUE and have format of
+     * `permission.value`
+     *
+     * @param group        Group's name permission is checked for
+     * @param permission   Base permission
+     * @param world        World for check (returns global and local permissions) or null (for global only)
+     * @param defaultValue Default value if not provided
+     * @param adapter      Default value adapter
+     * @return Highest value;
+     */
+    default <V> V getValueNonInheritedGroup(String group, String permission, @Nullable ServerWorld world, V defaultValue, ValueAdapter<V> adapter) {
+        return getValueFrom(this.getListNonInheritedGroup(group, permission, world), defaultValue, adapter);
+    }
+
+
+
+    enum Priority {
+        /**
+         * PermissionProvider should be default, unless already taken
+         */
+        MAIN,
+        /**
+         * PermissionProvider should be only used, when there is no main one
+         */
+        OPTIONAL,
+        /**
+         * PermissionProvider should be only used for vanilla PermissionProvider
+         */
+        @ApiStatus.Internal
+        FALLBACK
     }
 }
