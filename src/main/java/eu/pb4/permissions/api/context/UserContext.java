@@ -1,11 +1,14 @@
 package eu.pb4.permissions.api.context;
 
 import com.mojang.authlib.GameProfile;
+import eu.pb4.permissions.mixin.WorldAccessor;
 import net.minecraft.entity.Entity;
 import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.Util;
+import net.minecraft.util.registry.RegistryKey;
+import net.minecraft.world.World;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.UUID;
@@ -55,6 +58,16 @@ public interface UserContext {
      * @return ServerWorld of user or null if global
      */
     @Nullable ServerWorld getWorld();
+
+
+    /**
+     * Returns user's world's registry key
+     *
+     * @return RegistryKey of ServerWorld of user or null if global
+     */
+    default @Nullable RegistryKey<World> getWorldKey() {
+        return this.getWorld() != null ? ((WorldAccessor) this.getWorld()).getRegistryKey() : null;
+    }
 
 
     /**

@@ -9,7 +9,7 @@ public interface ValueAdapter<T> {
     ValueAdapter<Integer> INTEGER = new ValueAdapter<>() {
         @Override
         public int sort(Integer base, Integer compared) {
-            return base.compareTo(compared);
+            return Integer.compare(compared, base);
         }
 
         @Override
@@ -25,7 +25,7 @@ public interface ValueAdapter<T> {
     ValueAdapter<Double> DOUBLE = new ValueAdapter<>() {
         @Override
         public int sort(Double base, Double compared) {
-            return base.compareTo(compared);
+            return Double.compare(compared, base);
         }
 
         @Override

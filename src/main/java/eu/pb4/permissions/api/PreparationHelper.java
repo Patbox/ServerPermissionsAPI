@@ -160,12 +160,12 @@ public final class PreparationHelper {
             }
 
             @Override
-            public void set(UserContext user, @Nullable ServerWorld world, PermissionValue value) {
+            public void set(UserContext user, @Nullable ServerWorld world, String permission, PermissionValue value) {
 
             }
 
             @Override
-            public void set(UserContext user, @Nullable ServerWorld world, PermissionValue value, Duration duration) {
+            public void set(UserContext user, @Nullable ServerWorld world, String permission, PermissionValue value, Duration duration) {
 
             }
 

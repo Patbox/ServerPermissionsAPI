@@ -487,10 +487,11 @@ public interface PermissionProvider {
      * In case of PlaceholderValue.DEFAULT, it gets removed from player
      *
      * @param user  Player's UserContext
+     * @param permission Permission to change
      * @param value Value of permission, DEFAULT removes it
      */
-    default void set(UserContext user, PermissionValue value) {
-        this.set(user, null, value);
+    default void set(UserContext user, String permission, PermissionValue value) {
+        this.set(user, null, permission, value);
     }
 
     /**
@@ -498,21 +499,23 @@ public interface PermissionProvider {
      * In case of PlaceholderValue.DEFAULT, it gets removed from player
      *
      * @param user  Player's UserContext
+     * @param permission Permission to change
      * @param world Permission world (local permission) or null (for global)
      * @param value Value of permission, DEFAULT removes it
      */
-    void set(UserContext user, @Nullable ServerWorld world, PermissionValue value);
+    void set(UserContext user, @Nullable ServerWorld world, String permission, PermissionValue value);
 
     /**
      * Sets value of player's placeholder to provided one with specific duration
      * In case of PlaceholderValue.DEFAULT, it gets removed from player
      *
      * @param user     Player's UserContext
+     * @param permission Permission to change
      * @param value    Value of permission, DEFAULT removes it
      * @param duration Duration of permission
      */
-    default void set(UserContext user, PermissionValue value, Duration duration) {
-        this.set(user, null, value, duration);
+    default void set(UserContext user, String permission, PermissionValue value, Duration duration) {
+        this.set(user, null, permission, value, duration);
     }
 
     /**
@@ -521,10 +524,11 @@ public interface PermissionProvider {
      *
      * @param user     Player's UserContext
      * @param world    Permission world (local permission) or null (for global)
+     * @param permission Permission to change
      * @param value    Value of permission, DEFAULT removes it
      * @param duration Duration of permission
      */
-    void set(UserContext user, @Nullable ServerWorld world, PermissionValue value, Duration duration);
+    void set(UserContext user, @Nullable ServerWorld world, String permission, PermissionValue value, Duration duration);
 
     /**
      * Gets list of groups player is in. Ordered from most to least significant
