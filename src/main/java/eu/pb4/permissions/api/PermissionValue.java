@@ -22,4 +22,20 @@ public enum PermissionValue {
             case FALSE -> false;
         };
     }
+
+    public boolean pass(boolean val) {
+        return switch (this) {
+            case TRUE -> val;
+            case DEFAULT -> true;
+            case FALSE -> !val;
+        };
+    }
+
+    public static PermissionValue of(boolean value) {
+        return value ? TRUE : FALSE;
+    }
+
+    public static PermissionValue of(Boolean value) {
+        return value == Boolean.TRUE ? TRUE : value == Boolean.FALSE ? FALSE : null;
+    }
 }

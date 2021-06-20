@@ -187,7 +187,7 @@ public class LuckPermsProvider implements PermissionProvider {
     }
 
     @Override
-    public Map<String, PermissionValue> getAllInherited(UserContext user, @Nullable ServerWorld world) {
+    public Map<String, PermissionValue> getAllNonInherited(UserContext user, @Nullable ServerWorld world) {
         Map<String, PermissionValue> map = new LinkedHashMap<>();
         for (Map.Entry<String, Boolean> entry : getUser(user).getCachedData().getPermissionData(getQuery(user, world, true)).getPermissionMap().entrySet()) {
             map.put(entry.getKey(), entry.getValue() == false ? PermissionValue.TRUE : PermissionValue.FALSE);
@@ -197,7 +197,7 @@ public class LuckPermsProvider implements PermissionProvider {
     }
 
     @Override
-    public Map<String, PermissionValue> getAllInherited(UserContext user, String parentPermission, @Nullable ServerWorld world) {
+    public Map<String, PermissionValue> getAllNonInherited(UserContext user, String parentPermission, @Nullable ServerWorld world) {
         Map<String, PermissionValue> map = new LinkedHashMap<>();
         for (Map.Entry<String, Boolean> entry : getUser(user).getCachedData().getPermissionData(getQuery(user, world, false)).getPermissionMap().entrySet()) {
             if (entry.getKey().startsWith(parentPermission)) {

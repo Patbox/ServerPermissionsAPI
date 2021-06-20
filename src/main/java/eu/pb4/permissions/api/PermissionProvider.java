@@ -380,7 +380,7 @@ public interface PermissionProvider {
      * @return Map of permissions and values
      */
     default Map<String, PermissionValue> getAllNonInherited(UserContext user) {
-        return this.getAllInherited(user, user.getWorld());
+        return this.getAllNonInherited(user, user.getWorld());
     }
 
     /**
@@ -391,7 +391,7 @@ public interface PermissionProvider {
      * @param world World for check (returns global and local permissions) or null (for global only)
      * @return Map of permissions and values
      */
-    Map<String, PermissionValue> getAllInherited(UserContext user, @Nullable ServerWorld world);
+    Map<String, PermissionValue> getAllNonInherited(UserContext user, @Nullable ServerWorld world);
 
     /**
      * Gets map of all non inherited permissions with their values for user
@@ -404,7 +404,7 @@ public interface PermissionProvider {
      * @return Map of permissions and values
      */
     default Map<String, PermissionValue> getAllNonInherited(UserContext user, String parentPermission) {
-        return this.getAllInherited(user, user.getWorld());
+        return this.getAllNonInherited(user, user.getWorld());
     }
 
     /**
@@ -418,7 +418,7 @@ public interface PermissionProvider {
      * @param world            World for check (returns global and local permissions) or null (for global only)
      * @return Map of permissions and values
      */
-    Map<String, PermissionValue> getAllInherited(UserContext user, String parentPermission, @Nullable ServerWorld world);
+    Map<String, PermissionValue> getAllNonInherited(UserContext user, String parentPermission, @Nullable ServerWorld world);
 
     /**
      * This methods tries to read permission as value with usage of provided adapter.
