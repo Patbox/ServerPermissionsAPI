@@ -14,20 +14,31 @@ public enum PermissionValue {
      */
     FALSE;
 
-
-    public boolean allow(boolean or) {
+    /**
+     * Converts PermissionValue to boolean
+     *
+     * @param defaultValue Default value
+     * @return Boolean
+     */
+    public boolean toBoolean(boolean defaultValue) {
         return switch (this) {
             case TRUE -> true;
-            case DEFAULT -> or;
+            case DEFAULT -> defaultValue;
             case FALSE -> false;
         };
     }
 
-    public boolean pass(boolean val) {
+    /**
+     * Checks if value equals PermissionValue
+     *
+     * @param value Default value
+     * @return Boolean
+     */
+    public boolean pass(boolean value) {
         return switch (this) {
-            case TRUE -> val;
+            case TRUE -> value;
             case DEFAULT -> true;
-            case FALSE -> !val;
+            case FALSE -> !value;
         };
     }
 

@@ -38,7 +38,7 @@ public class TestMod implements ModInitializer {
             text.add(new LiteralText("Perms all:"));
 
             for (var entry : Permissions.get().getAll(userContext).entrySet()) {
-                text.add(new LiteralText("- " + entry.getKey() + " - " + entry.getValue().allow(false)));
+                text.add(new LiteralText("- " + entry.getKey() + " - " + entry.getValue().toBoolean(false)));
             }
 
             text.add(new LiteralText("Perms true:"));
@@ -81,7 +81,7 @@ public class TestMod implements ModInitializer {
             );
         });
 
-        ServerLifecycleEvents.SERVER_STARTING.register((server) -> LuckPermsProvider.SERVER = server);
+        //ServerLifecycleEvents.SERVER_STARTING.register((server) -> LuckPermsProvider.SERVER = server);
     }
 
 }

@@ -114,7 +114,7 @@ public class VanillaPermissionProvider implements PermissionProvider {
         return Priority.FALLBACK;
     }
 
-    private Map<String, Boolean> getPermissionMap(UserContext context) {
+    private Object2BooleanMap<String> getPermissionMap(UserContext context) {
         return switch (context.getPermissionLevel()) {
             case 4 -> level4Permissions;
             case 3 -> level3Permissions;
@@ -124,7 +124,7 @@ public class VanillaPermissionProvider implements PermissionProvider {
         };
     }
 
-    private Map<String, Boolean> getPermissionMap(String group) {
+    private Object2BooleanMap<String> getPermissionMap(String group) {
         return switch (group) {
             case OPERATOR_PREFIX + 4 -> level4Permissions;
             case OPERATOR_PREFIX + 3 -> level3Permissions;
@@ -146,7 +146,35 @@ public class VanillaPermissionProvider implements PermissionProvider {
 
     @Override
     public PermissionValue check(UserContext user, String permission) {
-        return PermissionValue.of(getPermissionMap(user).get(permission));
+        var map = getPermissionMap(user);
+        if (permission.endsWith(".*")) {
+            String substring = permission.substring(0, permission.length() - 2);
+
+            return this.getList(user, substring, PermissionValue.TRUE).size() > 0
+                    ? PermissionValue.TRUE
+                    : this.getList(user, substring, PermissionValue.FALSE).size() > 0
+                    ? PermissionValue.FALSE : PermissionValue.DEFAULT;
+        } else {
+            if (map.containsKey(permission)) {
+                return PermissionValue.of(map.getBoolean(permission));
+            } else {
+                String[] parts = permission.split("\\.");
+                int length = parts.length - 1;
+                while (length != 0) {
+                    String key = "";
+                    for (int x = 0; x < length; x++) {
+                        key += parts[x] + ".";
+                    }
+                    key += "*";
+
+                    length--;
+                    if (map.containsKey(key)) {
+                        return PermissionValue.of(map.getBoolean(key));
+                    }
+                }
+                return PermissionValue.DEFAULT;
+            }
+        }
     }
 
     @Override

@@ -19,7 +19,7 @@
     "main": [
       "eu.pb4.testmod.TestMod"
     ],
-    "permission-provider": [
+    "permission-providerx": [
       "eu.pb4.testmod.LuckPermsProvider"
     ]
   },

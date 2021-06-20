@@ -44,7 +44,7 @@ public class Permissions {
             try {
                 ServerPlayerEntity player = source.getPlayer();
 
-                return get().check(UserContext.of(player), permission).allow(source.hasPermissionLevel(defaultRequiredLevel));
+                return get().check(UserContext.of(player), permission).toBoolean(source.hasPermissionLevel(defaultRequiredLevel));
             } catch (Exception e) {
                 return source.hasPermissionLevel(defaultRequiredLevel);
             }
@@ -64,7 +64,7 @@ public class Permissions {
             try {
                 ServerPlayerEntity player = source.getPlayer();
 
-                return get().check(UserContext.of(player), permission).allow(playerByDefault);
+                return get().check(UserContext.of(player), permission).toBoolean(playerByDefault);
             } catch (Exception e) {
                 return consoleByDefault;
             }

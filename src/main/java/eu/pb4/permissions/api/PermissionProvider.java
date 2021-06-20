@@ -93,7 +93,7 @@ public interface PermissionProvider {
      * @return Corresponding PermissionValue
      */
     default boolean check(UserContext user, String permission, int defaultLevel) {
-        return check(user, permission).allow(user.getPermissionLevel() >= defaultLevel);
+        return check(user, permission).toBoolean(user.getPermissionLevel() >= defaultLevel);
     }
 
     /**
@@ -109,7 +109,7 @@ public interface PermissionProvider {
      * @return Corresponding PermissionValue
      */
     default boolean check(UserContext user, String permission, boolean defaultValue) {
-        return check(user, permission).allow(defaultValue);
+        return check(user, permission).toBoolean(defaultValue);
     }
 
     /**

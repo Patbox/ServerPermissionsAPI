@@ -17,6 +17,7 @@ repositories {
 	// See https://docs.gradle.org/current/userguide/declaring_repositories.html
 	// for more information about repositories.
 	mavenCentral()
+	maven { url 'https://maven.tomthegeek.ml/releases/' }
 }
 
 sourceSets {
@@ -51,6 +52,7 @@ dependencies {
 	modRuntime "net.fabricmc.fabric-api:fabric-api:${project.fabric_version}"
 	modCompileOnly "net.fabricmc.fabric-api:fabric-api:${project.fabric_version}"
 	compileOnly 'net.luckperms:api:5.3'
+	modRuntime "com.github.tom_the_geek:wdmnf:1.0.0"
 
 	testmodImplementation sourceSets.main.output
 
