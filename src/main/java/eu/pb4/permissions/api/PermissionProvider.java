@@ -70,7 +70,7 @@ public interface PermissionProvider {
     /**
      * Checks value of player's permission
      * By default, it checks only for single permission
-     * If requested permission ends with a wildcard (.*) it will return PermissionValue.TRUE
+     * If requested permission ends with a ".*" or ".?" it will return PermissionValue.TRUE
      * when any of child permission is true, PermissionValue.DEFAULT when doesn't exist
      * or PermissionValue.FALSE when negated
      *
@@ -609,7 +609,7 @@ public interface PermissionProvider {
     /**
      * Checks value of group's permission
      * By default, it checks only for single permission
-     * If requested permission ends with a wildcard (.*) it will return PermissionValue.TRUE
+     * If requested permission ends with a ".*" or ".?" it will return PermissionValue.TRUE
      * when any of child permission is true, PermissionValue.DEFAULT when doesn't exist
      * or PermissionValue.FALSE when negated
      *

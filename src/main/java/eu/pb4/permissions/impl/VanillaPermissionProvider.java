@@ -148,7 +148,7 @@ public class VanillaPermissionProvider implements PermissionProvider {
     @Override
     public PermissionValue check(UserContext user, String permission) {
         var map = getPermissionMap(user);
-        if (permission.endsWith(".*")) {
+        if (permission.endsWith(".*") || permission.endsWith(".?")) {
             String substring = permission.substring(0, permission.length() - 2);
 
             return this.getList(user, substring, PermissionValue.TRUE).size() > 0
@@ -311,7 +311,7 @@ public class VanillaPermissionProvider implements PermissionProvider {
     @Override
     public PermissionValue checkGroup(String group, @Nullable ServerWorld world, String permission) {
         var map = getPermissionMap(group);
-        if (permission.endsWith(".*")) {
+        if (permission.endsWith(".*") || permission.endsWith(".?")) {
             String substring = permission.substring(0, permission.length() - 2);
 
             return this.getListGroup(group, substring, PermissionValue.TRUE).size() > 0
