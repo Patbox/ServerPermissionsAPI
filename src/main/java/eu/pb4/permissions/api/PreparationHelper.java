@@ -41,17 +41,17 @@ public final class PreparationHelper {
                 e.printStackTrace();
             }
         }
-        PermissionProvider selectedProvider = null;
+        PermissionProvider selectedProvider;
 
         VanillaConfig config = ConfigHelper.getConfig();
 
-        selectedProvider = providerMap.get(config);
+        selectedProvider = providerMap.get(config.defaultProvider);
 
 
         List<String> allProviders = new ArrayList<>();
 
-        allProviders.addAll(mainProvider.stream().map(provider -> provider.getIdentifier()).collect(Collectors.toList()));
-        allProviders.addAll(optionalProvider.stream().map(provider -> provider.getIdentifier()).collect(Collectors.toList()));
+        allProviders.addAll(mainProvider.stream().map(PermissionProvider::getIdentifier).collect(Collectors.toList()));
+        allProviders.addAll(optionalProvider.stream().map(PermissionProvider::getIdentifier).collect(Collectors.toList()));
 
         if (mainProvider.size() > 0) {
             PermissionsAPIMod.LOGGER.info(String.format("Registered main providers (%s): %s",
@@ -88,10 +88,10 @@ public final class PreparationHelper {
             config.defaultProvider = selectedProvider.getIdentifier();
             ConfigHelper.saveConfig(config.asSimple());
         }
-        if (!oldProvider.isEmpty() && !oldProvider.equals(selectedProvider.getIdentifier())) {
+        if (oldProvider != null && !oldProvider.isEmpty() && !oldProvider.equals(selectedProvider.getIdentifier())) {
             PermissionsAPIMod.LOGGER.warn(String.format("Previous permission provider (%s) was replaced with new one!", oldProvider));
         }
-        PermissionsAPIMod.LOGGER.info("Selected: " + selectedProvider.getName());
+        PermissionsAPIMod.LOGGER.info(String.format("Selected permission provider: %s (%s)", selectedProvider.getName(), selectedProvider.getIdentifier()));
         Permissions.DEFAULT_PROVIDER = selectedProvider;
         Permissions.PROVIDERS.putAll(providerMap);
     }

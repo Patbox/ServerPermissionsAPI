@@ -7,7 +7,7 @@ public class VanillaConfig {
     public String _availableProviders;
     public String defaultProvider;
 
-    public String _section = "Vanilla/Build in permissions:";
+    public String _section = "Vanilla/Build in permissions";
     public Map<String, Boolean> defaultPermissions = new HashMap<>();
     public Map<String, Boolean> level1Permissions = new HashMap<>();
     public Map<String, Boolean> level2Permissions = new HashMap<>();

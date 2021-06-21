@@ -1,5 +1,6 @@
 package eu.pb4.permissions.api;
 
+@SuppressWarnings({"unused"})
 public enum PermissionValue {
     /**
      * Default permission - User doesn't have it defined

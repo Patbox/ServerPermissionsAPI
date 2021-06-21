@@ -6,13 +6,12 @@ import eu.pb4.permissions.api.ValueAdapter;
 import eu.pb4.permissions.api.context.UserContext;
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.command.v1.CommandRegistrationCallback;
-import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
-import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.text.LiteralText;
 import net.minecraft.text.Text;
 
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -22,11 +21,6 @@ import static net.minecraft.server.command.CommandManager.literal;
 public class TestMod implements ModInitializer {
 
     private static int test(CommandContext<ServerCommandSource> context) {
-        try {
-            ServerPlayerEntity player = context.getSource().getPlayer();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
         return 0;
     }
 
@@ -47,21 +41,18 @@ public class TestMod implements ModInitializer {
                 text.add(new LiteralText("- " + entry));
             }
 
+            text.add(new LiteralText("Perms value home.*: " + Permissions.get().check(userContext, "home.*")));
+
             text.add(new LiteralText("Perms value home.X: " + Permissions.get().getValue(userContext, "home", 0, ValueAdapter.INTEGER)));
+            text.add(new LiteralText("Perms value duration.X: " + Permissions.get().getValue(userContext, "duration", Duration.ZERO, ValueAdapter.DURATION).toString()));
+
+            text.add(new LiteralText("Groups: " + String.join(", ", Permissions.get().getGroups(userContext))));
+
 
             for(Text t : text) {
                 context.getSource().sendFeedback(t, false);
             }
 
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        return 0;
-    }
-
-    private static int test3(CommandContext<ServerCommandSource> context) {
-        try {
-            ServerPlayerEntity player = context.getSource().getPlayer();
         } catch (Exception e) {
             e.printStackTrace();
         }

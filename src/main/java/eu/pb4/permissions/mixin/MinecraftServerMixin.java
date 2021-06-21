@@ -16,7 +16,7 @@ import java.util.concurrent.CompletableFuture;
 
 @Mixin(MinecraftServer.class)
 public class MinecraftServerMixin {
-    @Inject(at = @At(value = "INVOKE", target = "Lnet/minecraft/server/MinecraftServer;setFavicon(Lnet/minecraft/server/ServerMetadata;)V", ordinal = 0), method = "runServer")
+    @Inject(method = "runServer", at = @At(value = "INVOKE", target = "Lnet/minecraft/server/MinecraftServer;setupServer()Z", shift = At.Shift.BEFORE, ordinal = 0))
     private void setupPermissionsProviders(CallbackInfo info) {
         PreparationHelper.run((MinecraftServer) (Object) this);
     }

@@ -15,6 +15,7 @@ import org.jetbrains.annotations.Nullable;
 import java.time.Duration;
 import java.util.*;
 
+@SuppressWarnings({"unchecked"})
 public class VanillaPermissionProvider implements PermissionProvider {
     private final static String OPERATOR_PREFIX = "operator-level-";
     private static VanillaPermissionProvider INSTANCE;
@@ -134,7 +135,7 @@ public class VanillaPermissionProvider implements PermissionProvider {
         };
     }
 
-    private Map<String, Boolean> getPermissionMapNon(String group) {
+    private Object2BooleanMap<String> getPermissionMapNon(String group) {
         return switch (group) {
             case OPERATOR_PREFIX + 4 -> level4PermissionsNon;
             case OPERATOR_PREFIX + 3 -> level3PermissionsNon;
@@ -161,15 +162,15 @@ public class VanillaPermissionProvider implements PermissionProvider {
                 String[] parts = permission.split("\\.");
                 int length = parts.length - 1;
                 while (length != 0) {
-                    String key = "";
+                    StringBuilder key = new StringBuilder();
                     for (int x = 0; x < length; x++) {
-                        key += parts[x] + ".";
+                        key.append(parts[x]).append(".");
                     }
-                    key += "*";
+                    key.append("*");
 
                     length--;
-                    if (map.containsKey(key)) {
-                        return PermissionValue.of(map.getBoolean(key));
+                    if (map.containsKey(key.toString())) {
+                        return PermissionValue.of(map.getBoolean(key.toString()));
                     }
                 }
                 return PermissionValue.DEFAULT;
@@ -180,8 +181,8 @@ public class VanillaPermissionProvider implements PermissionProvider {
     @Override
     public List<String> getList(UserContext user, @Nullable ServerWorld world, PermissionValue value) {
         List<String> list = new ArrayList<>();
-        for (Map.Entry<String, Boolean> n : this.getPermissionMap(user).entrySet()) {
-            if (value.pass(n.getValue())) {
+        for (Object2BooleanMap.Entry<String> n : this.getPermissionMap(user).object2BooleanEntrySet()) {
+            if (value.pass(n.getBooleanValue())) {
                 String key = n.getKey();
                 list.add(key);
             }
@@ -195,8 +196,8 @@ public class VanillaPermissionProvider implements PermissionProvider {
         String basePermission = parentPermission + ".";
         int baseLength = basePermission.length();
 
-        for (Map.Entry<String, Boolean> n : this.getPermissionMap(user).entrySet()) {
-            if (n.getKey().startsWith(basePermission) && value.pass(n.getValue())) {
+        for (Object2BooleanMap.Entry<String> n : this.getPermissionMap(user).object2BooleanEntrySet()) {
+            if (n.getKey().startsWith(basePermission) && value.pass(n.getBooleanValue())) {
                 String key = n.getKey().substring(baseLength);
                 if (!key.isEmpty()) {
                     list.add(key);
@@ -219,8 +220,8 @@ public class VanillaPermissionProvider implements PermissionProvider {
     @Override
     public Map<String, PermissionValue> getAll(UserContext user, @Nullable ServerWorld world) {
         Map<String, PermissionValue> map = new LinkedHashMap<>();
-        for (Map.Entry<String, Boolean> entry : getPermissionMap(user).entrySet()) {
-            map.put(entry.getKey(), PermissionValue.of(entry.getValue()));
+        for (Object2BooleanMap.Entry<String> entry : this.getPermissionMap(user).object2BooleanEntrySet()) {
+            map.put(entry.getKey(), PermissionValue.of(entry.getBooleanValue()));
         }
 
         return map;
@@ -232,9 +233,9 @@ public class VanillaPermissionProvider implements PermissionProvider {
         String basePermission = parentPermission + ".";
         int baseLength = basePermission.length();
 
-        for (Map.Entry<String, Boolean> entry : getPermissionMap(user).entrySet()) {
+        for (Object2BooleanMap.Entry<String> entry : this.getPermissionMap(user).object2BooleanEntrySet()) {
             if (entry.getKey().startsWith(basePermission)) {
-                map.put(entry.getKey().substring(baseLength), PermissionValue.of(entry.getValue()));
+                map.put(entry.getKey().substring(baseLength), PermissionValue.of(entry.getBooleanValue()));
             }
         }
 
@@ -266,7 +267,7 @@ public class VanillaPermissionProvider implements PermissionProvider {
         List<String> list = new ArrayList<>();
         list.add("default");
 
-        for (int x = 0; x <= user.getPermissionLevel(); x++) {
+        for (int x = 1; x <= user.getPermissionLevel(); x++) {
             list.add(OPERATOR_PREFIX + x);
         }
 
@@ -280,6 +281,7 @@ public class VanillaPermissionProvider implements PermissionProvider {
                 int level = MathHelper.clamp(Integer.parseInt(group.substring(OPERATOR_PREFIX.length())), 1, 4);
                 this.server.getPlayerManager().getOpList().add(new OperatorEntry(user.getGameProfile(), level, false));
             } catch (Exception e) {
+                // Don't do anything
             }
         }
     }
@@ -295,25 +297,54 @@ public class VanillaPermissionProvider implements PermissionProvider {
             try {
                 int level = MathHelper.clamp(Integer.parseInt(group.substring(OPERATOR_PREFIX.length())), 1, 4);
                 OperatorList operatorList = this.server.getPlayerManager().getOpList();
+                OperatorEntry entry = operatorList.get(user.getGameProfile());
 
-                if (operatorList.get(user.getGameProfile()).getPermissionLevel() == level) {
+                if (entry != null && entry.getPermissionLevel() == level) {
                     operatorList.remove(user.getGameProfile());
                 }
             } catch (Exception e) {
+                // Don't do anything
             }
         }
     }
 
     @Override
     public PermissionValue checkGroup(String group, @Nullable ServerWorld world, String permission) {
-        return PermissionValue.of(getPermissionMap(group).get(permission));
-    }
+        var map = getPermissionMap(group);
+        if (permission.endsWith(".*")) {
+            String substring = permission.substring(0, permission.length() - 2);
+
+            return this.getListGroup(group, substring, PermissionValue.TRUE).size() > 0
+                    ? PermissionValue.TRUE
+                    : this.getListGroup(group, substring, PermissionValue.FALSE).size() > 0
+                    ? PermissionValue.FALSE : PermissionValue.DEFAULT;
+        } else {
+            if (map.containsKey(permission)) {
+                return PermissionValue.of(map.getBoolean(permission));
+            } else {
+                String[] parts = permission.split("\\.");
+                int length = parts.length - 1;
+                while (length != 0) {
+                    StringBuilder key = new StringBuilder();
+                    for (int x = 0; x < length; x++) {
+                        key.append(parts[x]).append(".");
+                    }
+                    key.append("*");
+
+                    length--;
+                    if (map.containsKey(key.toString())) {
+                        return PermissionValue.of(map.getBoolean(key.toString()));
+                    }
+                }
+                return PermissionValue.DEFAULT;
+            }
+        }    }
 
     @Override
     public List<String> getListGroup(String group, @Nullable ServerWorld world, PermissionValue value) {
         List<String> list = new ArrayList<>();
-        for (Map.Entry<String, Boolean> n : this.getPermissionMap(group).entrySet()) {
-            if (value.pass(n.getValue())) {
+        for (Object2BooleanMap.Entry<String> n : this.getPermissionMap(group).object2BooleanEntrySet()) {
+            if (value.pass(n.getBooleanValue())) {
                 String key = n.getKey();
                 list.add(key);
             }
@@ -327,8 +358,8 @@ public class VanillaPermissionProvider implements PermissionProvider {
         String basePermission = parentPermission + ".";
         int baseLength = basePermission.length();
 
-        for (Map.Entry<String, Boolean> n : this.getPermissionMap(group).entrySet()) {
-            if (n.getKey().startsWith(basePermission) && value.pass(n.getValue())) {
+        for (Object2BooleanMap.Entry<String> n : this.getPermissionMap(group).object2BooleanEntrySet()) {
+            if (n.getKey().startsWith(basePermission) && value.pass(n.getBooleanValue())) {
                 String key = n.getKey().substring(baseLength);
                 if (!key.isEmpty()) {
                     list.add(key);
@@ -341,8 +372,8 @@ public class VanillaPermissionProvider implements PermissionProvider {
     @Override
     public List<String> getListNonInheritedGroup(String group, @Nullable ServerWorld world, PermissionValue value) {
         List<String> list = new ArrayList<>();
-        for (Map.Entry<String, Boolean> n : this.getPermissionMapNon(group).entrySet()) {
-            if (value.pass(n.getValue())) {
+        for (Object2BooleanMap.Entry<String> n : this.getPermissionMap(group).object2BooleanEntrySet()) {
+            if (value.pass(n.getBooleanValue())) {
                 String key = n.getKey();
                 list.add(key);
             }
@@ -356,8 +387,8 @@ public class VanillaPermissionProvider implements PermissionProvider {
         String basePermission = parentPermission + ".";
         int baseLength = basePermission.length();
 
-        for (Map.Entry<String, Boolean> n : this.getPermissionMapNon(group).entrySet()) {
-            if (n.getKey().startsWith(basePermission) && value.pass(n.getValue())) {
+        for (Object2BooleanMap.Entry<String> n : this.getPermissionMap(group).object2BooleanEntrySet()) {
+            if (n.getKey().startsWith(basePermission) && value.pass(n.getBooleanValue())) {
                 String key = n.getKey().substring(baseLength);
                 if (!key.isEmpty()) {
                     list.add(key);
@@ -370,8 +401,8 @@ public class VanillaPermissionProvider implements PermissionProvider {
     @Override
     public Map<String, PermissionValue> getAllGroup(String group, @Nullable ServerWorld world) {
         Map<String, PermissionValue> map = new LinkedHashMap<>();
-        for (Map.Entry<String, Boolean> entry : getPermissionMap(group).entrySet()) {
-            map.put(entry.getKey(), PermissionValue.of(entry.getValue()));
+        for (Object2BooleanMap.Entry<String> entry : this.getPermissionMap(group).object2BooleanEntrySet()) {
+            map.put(entry.getKey(), PermissionValue.of(entry.getBooleanValue()));
         }
 
         return map;
@@ -383,9 +414,9 @@ public class VanillaPermissionProvider implements PermissionProvider {
         String basePermission = parentPermission + ".";
         int baseLength = basePermission.length();
 
-        for (Map.Entry<String, Boolean> entry : getPermissionMap(group).entrySet()) {
+        for (Object2BooleanMap.Entry<String> entry : this.getPermissionMap(group).object2BooleanEntrySet()) {
             if (entry.getKey().startsWith(basePermission)) {
-                map.put(entry.getKey().substring(baseLength), PermissionValue.of(entry.getValue()));
+                map.put(entry.getKey().substring(baseLength), PermissionValue.of(entry.getBooleanValue()));
             }
         }
 
@@ -395,8 +426,8 @@ public class VanillaPermissionProvider implements PermissionProvider {
     @Override
     public Map<String, PermissionValue> getAllInheritedGroup(String group, @Nullable ServerWorld world) {
         Map<String, PermissionValue> map = new LinkedHashMap<>();
-        for (Map.Entry<String, Boolean> entry : getPermissionMapNon(group).entrySet()) {
-            map.put(entry.getKey(), PermissionValue.of(entry.getValue()));
+        for (Object2BooleanMap.Entry<String> entry : this.getPermissionMapNon(group).object2BooleanEntrySet()) {
+            map.put(entry.getKey(), PermissionValue.of(entry.getBooleanValue()));
         }
 
         return map;
@@ -405,8 +436,8 @@ public class VanillaPermissionProvider implements PermissionProvider {
     @Override
     public Map<String, PermissionValue> getAllInheritedGroup(String group, String parentPermission, @Nullable ServerWorld world) {
         Map<String, PermissionValue> map = new LinkedHashMap<>();
-        for (Map.Entry<String, Boolean> entry : getPermissionMapNon(group).entrySet()) {
-            map.put(entry.getKey(), PermissionValue.of(entry.getValue()));
+        for (Object2BooleanMap.Entry<String> entry : this.getPermissionMapNon(group).object2BooleanEntrySet()) {
+            map.put(entry.getKey(), PermissionValue.of(entry.getBooleanValue()));
         }
 
         return map;
