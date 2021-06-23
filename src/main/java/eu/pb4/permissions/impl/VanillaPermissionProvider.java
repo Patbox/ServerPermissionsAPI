@@ -1,8 +1,8 @@
 package eu.pb4.permissions.impl;
 
-import eu.pb4.permissions.api.PermissionProvider;
-import eu.pb4.permissions.api.PermissionValue;
-import eu.pb4.permissions.api.context.UserContext;
+import eu.pb4.permissions.api.v1.PermissionProvider;
+import eu.pb4.permissions.api.v1.PermissionValue;
+import eu.pb4.permissions.api.v1.UserContext;
 import it.unimi.dsi.fastutil.objects.Object2BooleanArrayMap;
 import it.unimi.dsi.fastutil.objects.Object2BooleanMap;
 import net.minecraft.server.MinecraftServer;
@@ -107,6 +107,11 @@ public class VanillaPermissionProvider implements PermissionProvider {
 
     @Override
     public boolean supportsPerWorldGroups() {
+        return false;
+    }
+
+    @Override
+    public boolean supportsOfflineChecks() {
         return false;
     }
 

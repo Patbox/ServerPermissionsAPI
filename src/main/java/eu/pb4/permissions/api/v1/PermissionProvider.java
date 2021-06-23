@@ -1,7 +1,6 @@
-package eu.pb4.permissions.api;
+package eu.pb4.permissions.api.v1;
 
 
-import eu.pb4.permissions.api.context.UserContext;
 import net.minecraft.server.world.ServerWorld;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
@@ -61,6 +60,11 @@ public interface PermissionProvider {
      * Returns true, if provider supports per world groups
      */
     boolean supportsPerWorldGroups();
+
+    /**
+     * Returns true, if provider supports checking of permissions for offline players
+     */
+    boolean supportsOfflineChecks();
 
     /**
      * Returns true, if this Permission should be a candidate for being default
@@ -431,7 +435,7 @@ public interface PermissionProvider {
      * @param adapter      Default value adapter
      * @return Highest value;
      */
-    default <V> V getValue(UserContext user, String permission, V defaultValue, ValueAdapter<V> adapter) {
+    default <V> V getAsValue(UserContext user, String permission, V defaultValue, ValueAdapter<V> adapter) {
         return getValueFrom(this.getList(user, permission, user.getWorld()), defaultValue, adapter);
     }
 
@@ -447,7 +451,7 @@ public interface PermissionProvider {
      * @param adapter      Default value adapter
      * @return Highest value;
      */
-    default <V> V getValue(UserContext user, String permission, @Nullable ServerWorld world, V defaultValue, ValueAdapter<V> adapter) {
+    default <V> V getAsValue(UserContext user, String permission, @Nullable ServerWorld world, V defaultValue, ValueAdapter<V> adapter) {
         return getValueFrom(this.getList(user, permission, world), defaultValue, adapter);
     }
 
@@ -462,7 +466,7 @@ public interface PermissionProvider {
      * @param adapter      Default value adapter
      * @return Highest value;
      */
-    default <V> V getValueNonInherited(UserContext user, String permission, V defaultValue, ValueAdapter<V> adapter) {
+    default <V> V getAsValueNonInherited(UserContext user, String permission, V defaultValue, ValueAdapter<V> adapter) {
         return getValueFrom(this.getListNonInherited(user, permission, user.getWorld()), defaultValue, adapter);
     }
 
@@ -478,7 +482,7 @@ public interface PermissionProvider {
      * @param adapter      Default value adapter
      * @return Highest value;
      */
-    default <V> V getValueNonInherited(UserContext user, String permission, @Nullable ServerWorld world, V defaultValue, ValueAdapter<V> adapter) {
+    default <V> V getAsValueNonInherited(UserContext user, String permission, @Nullable ServerWorld world, V defaultValue, ValueAdapter<V> adapter) {
         return getValueFrom(this.getListNonInherited(user, permission, world), defaultValue, adapter);
     }
 
@@ -956,7 +960,7 @@ public interface PermissionProvider {
      * @param adapter      Default value adapter
      * @return Highest value;
      */
-    default <V> V getValueGroup(String group, String permission, V defaultValue, ValueAdapter<V> adapter) {
+    default <V> V getAsValueGroup(String group, String permission, V defaultValue, ValueAdapter<V> adapter) {
         return getValueFrom(this.getListGroup(group, permission, (ServerWorld) null), defaultValue, adapter);
     }
 
@@ -972,7 +976,7 @@ public interface PermissionProvider {
      * @param adapter      Default value adapter
      * @return Highest value;
      */
-    default <V> V getValueGroup(String group, String permission, @Nullable ServerWorld world, V defaultValue, ValueAdapter<V> adapter) {
+    default <V> V getAsValueGroup(String group, String permission, @Nullable ServerWorld world, V defaultValue, ValueAdapter<V> adapter) {
         return getValueFrom(this.getListGroup(group, permission, world), defaultValue, adapter);
     }
 
@@ -987,7 +991,7 @@ public interface PermissionProvider {
      * @param adapter      Default value adapter
      * @return Highest value;
      */
-    default <V> V getValueNonInheritedGroup(String group, String permission, V defaultValue, ValueAdapter<V> adapter) {
+    default <V> V getAsValueNonInheritedGroup(String group, String permission, V defaultValue, ValueAdapter<V> adapter) {
         return getValueFrom(this.getListNonInheritedGroup(group, permission, (ServerWorld) null), defaultValue, adapter);
     }
 
@@ -1003,7 +1007,7 @@ public interface PermissionProvider {
      * @param adapter      Default value adapter
      * @return Highest value;
      */
-    default <V> V getValueNonInheritedGroup(String group, String permission, @Nullable ServerWorld world, V defaultValue, ValueAdapter<V> adapter) {
+    default <V> V getAsValueNonInheritedGroup(String group, String permission, @Nullable ServerWorld world, V defaultValue, ValueAdapter<V> adapter) {
         return getValueFrom(this.getListNonInheritedGroup(group, permission, world), defaultValue, adapter);
     }
 

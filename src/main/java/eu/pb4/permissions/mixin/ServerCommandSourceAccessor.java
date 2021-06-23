@@ -8,5 +8,5 @@ import org.spongepowered.asm.mixin.gen.Accessor;
 @Mixin(ServerCommandSource.class)
 public interface ServerCommandSourceAccessor {
     @Accessor("level")
-    int getPermissionLevel();
+    int permissionsApi_getPermissionLevel();
 }

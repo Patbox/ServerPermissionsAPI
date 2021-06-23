@@ -1,21 +1,21 @@
-package eu.pb4.permissions.api.context;
+package eu.pb4.permissions.impl.context;
 
 import com.mojang.authlib.GameProfile;
+import eu.pb4.permissions.api.v1.UserContext;
 import eu.pb4.permissions.mixin.EntityAccessor;
 import net.minecraft.entity.Entity;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ServerWorld;
-import net.minecraft.world.World;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.UUID;
 
-class EntityUserContext implements UserContext {
+public class EntityUserContext implements UserContext {
     private final GameProfile gameProfile;
     private final Entity entity;
     private final ServerWorld world;
 
-    EntityUserContext(Entity entity, ServerWorld world) {
+    public EntityUserContext(Entity entity, ServerWorld world) {
         this.entity = entity;
         this.gameProfile = new GameProfile(this.entity.getUuid(), this.entity.getEntityName());
         this.world = world;
@@ -24,7 +24,7 @@ class EntityUserContext implements UserContext {
 
     @Override
     public int getPermissionLevel() {
-        return ((EntityAccessor) this.entity).invokeGetPermissionLevel();
+        return ((EntityAccessor) this.entity).permissionsApi_getPermissionLevel();
     }
 
     @Override

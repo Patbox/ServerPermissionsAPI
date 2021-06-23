@@ -1,9 +1,9 @@
 package eu.pb4.testmod;
 
 import com.mojang.brigadier.context.CommandContext;
-import eu.pb4.permissions.api.Permissions;
-import eu.pb4.permissions.api.ValueAdapter;
-import eu.pb4.permissions.api.context.UserContext;
+import eu.pb4.permissions.api.v1.Permissions;
+import eu.pb4.permissions.api.v1.ValueAdapter;
+import eu.pb4.permissions.api.v1.UserContext;
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.command.v1.CommandRegistrationCallback;
 import net.minecraft.server.command.ServerCommandSource;
@@ -43,8 +43,8 @@ public class TestMod implements ModInitializer {
 
             text.add(new LiteralText("Perms value home.*: " + Permissions.get().check(userContext, "home.*")));
 
-            text.add(new LiteralText("Perms value home.X: " + Permissions.get().getValue(userContext, "home", 0, ValueAdapter.INTEGER)));
-            text.add(new LiteralText("Perms value duration.X: " + Permissions.get().getValue(userContext, "duration", Duration.ZERO, ValueAdapter.DURATION).toString()));
+            text.add(new LiteralText("Perms value home.X: " + Permissions.get().getAsValue(userContext, "home", 0, ValueAdapter.INTEGER)));
+            text.add(new LiteralText("Perms value duration.X: " + Permissions.get().getAsValue(userContext, "duration", Duration.ZERO, ValueAdapter.DURATION).toString()));
 
             text.add(new LiteralText("Groups: " + String.join(", ", Permissions.get().getGroups(userContext))));
 

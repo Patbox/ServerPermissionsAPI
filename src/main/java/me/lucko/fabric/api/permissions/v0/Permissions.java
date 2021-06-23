@@ -25,8 +25,8 @@
 
 package me.lucko.fabric.api.permissions.v0;
 
-import eu.pb4.permissions.api.PermissionValue;
-import eu.pb4.permissions.api.context.UserContext;
+import eu.pb4.permissions.api.v1.PermissionValue;
+import eu.pb4.permissions.api.v1.UserContext;
 import net.fabricmc.fabric.api.util.TriState;
 import net.minecraft.command.CommandSource;
 import net.minecraft.entity.Entity;
@@ -51,7 +51,7 @@ public interface Permissions {
     static @NotNull TriState getPermissionValue(@NotNull CommandSource source, @NotNull String permission) {
         Objects.requireNonNull(source, "source");
         Objects.requireNonNull(permission, "permission");
-        return toTriState(eu.pb4.permissions.api.Permissions.get().check(UserContext.of((ServerCommandSource) source), permission));
+        return toTriState(eu.pb4.permissions.api.v1.Permissions.get().check(UserContext.of((ServerCommandSource) source), permission));
     }
 
     /**

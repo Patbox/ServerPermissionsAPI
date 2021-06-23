@@ -1,24 +1,18 @@
-package eu.pb4.permissions.api;
+package eu.pb4.permissions.api.v1;
 
-import eu.pb4.permissions.api.context.UserContext;
+import eu.pb4.permissions.impl.PermissionsImpl;
 import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.server.network.ServerPlayerEntity;
 
-
-import java.util.HashMap;
-import java.util.Map;
 import java.util.function.Predicate;
 
 @SuppressWarnings({"null", "unused"})
 public class Permissions {
-    static final Map<String, PermissionProvider> PROVIDERS = new HashMap<>();
-    static PermissionProvider DEFAULT_PROVIDER = null;
-
     /**
      * Returns default permission provider.
      */
     public static PermissionProvider get() {
-        return DEFAULT_PROVIDER;
+        return PermissionsImpl.get();
     }
 
     /**
@@ -28,14 +22,14 @@ public class Permissions {
      * @return PermissionProvider or null
      */
     public static PermissionProvider getById(String identifier) {
-        return PROVIDERS.get(identifier);
+        return PermissionsImpl.getById(identifier);
     }
 
     /**
      * Creates a predicate, which returns the result of permission check,
      * Falling back to operator level one.
      *
-     * @param permission Required permission
+     * @param permission           Required permission
      * @param defaultRequiredLevel Otherwise required operator level
      * @return Boolean indication if user have permission
      */
@@ -55,7 +49,7 @@ public class Permissions {
      * Creates a predicate, which returns the result of permission check,
      * Falling back to operator level one.
      *
-     * @param permission Required permission
+     * @param permission      Required permission
      * @param playerByDefault If player should be allowed by default
      * @return Boolean indication if user have permission
      */
@@ -75,7 +69,7 @@ public class Permissions {
      * Creates a predicate, which returns the result of permission check,
      * And default value
      *
-     * @param permission Required permission
+     * @param permission      Required permission
      * @param playerByDefault If player should be allowed by default
      * @return Boolean indication if user have permission
      */

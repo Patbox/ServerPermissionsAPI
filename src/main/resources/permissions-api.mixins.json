@@ -6,8 +6,7 @@
   "mixins": [
     "EntityAccessor",
     "MinecraftServerMixin",
-    "ServerCommandSourceAccessor",
-    "WorldAccessor"
+    "ServerCommandSourceAccessor"
   ],
   "injectors": {
     "defaultRequire": 1

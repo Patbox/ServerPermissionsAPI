@@ -1,9 +1,8 @@
 package eu.pb4.testmod;
 
-import eu.pb4.permissions.api.PermissionProvider;
-import eu.pb4.permissions.api.PermissionValue;
-import eu.pb4.permissions.api.context.UserContext;
-import eu.pb4.permissions.mixin.WorldAccessor;
+import eu.pb4.permissions.api.v1.PermissionProvider;
+import eu.pb4.permissions.api.v1.PermissionValue;
+import eu.pb4.permissions.api.v1.UserContext;
 import net.luckperms.api.LuckPerms;
 import net.luckperms.api.context.ContextSet;
 import net.luckperms.api.context.ImmutableContextSet;
@@ -53,7 +52,7 @@ public class LuckPermsProvider implements PermissionProvider {
     protected QueryOptions getQuery(UserContext context, User user, ServerWorld world, boolean inheritance) {
         ContextSet contextSet = user.getQueryOptions().context().mutableCopy();
         if (world != null) {
-            contextSet = ImmutableContextSet.builder().addAll(contextSet).add("world", ((WorldAccessor) world).getRegistryKey().getValue().toString()).build();
+            contextSet = ImmutableContextSet.builder().addAll(contextSet).add("world", world.getRegistryKey().getValue().toString()).build();
         }
         return user.getQueryOptions().toBuilder().context(contextSet).flag(Flag.RESOLVE_INHERITANCE, inheritance).build();
     }
@@ -61,7 +60,7 @@ public class LuckPermsProvider implements PermissionProvider {
     protected QueryOptions getQuery(String group, ServerWorld world, boolean inheritance) {
         ContextSet contextSet = ImmutableContextSet.empty();
         if (world != null) {
-            contextSet = ImmutableContextSet.builder().addAll(contextSet).add("world", ((WorldAccessor) world).getRegistryKey().getValue().toString()).build();
+            contextSet = ImmutableContextSet.builder().addAll(contextSet).add("world", world.getRegistryKey().getValue().toString()).build();
         }
         Group group1 = getLuckPerms().getGroupManager().getGroup(group);
 
@@ -109,6 +108,11 @@ public class LuckPermsProvider implements PermissionProvider {
     @Override
     public boolean supportsPerWorldGroups() {
         return true;
+    }
+
+    @Override
+    public boolean supportsOfflineChecks() {
+        return false;
     }
 
     @Override
@@ -271,13 +275,13 @@ public class LuckPermsProvider implements PermissionProvider {
             if (value == PermissionValue.DEFAULT) {
                 NodeBuilder<?, ?> node = Node.builder(permission);
                 if (world != null) {
-                    node.withContext("world", ((WorldAccessor) world).getRegistryKey().getValue().toString());
+                    node.withContext("world", world.getRegistryKey().getValue().toString());
                 }
                 lpUser.data().remove(node.build());
             } else {
                 NodeBuilder<?, ?> node = Node.builder(permission).value(value == PermissionValue.TRUE);
                 if (world != null) {
-                    node.withContext("world", ((WorldAccessor) world).getRegistryKey().getValue().toString());
+                    node.withContext("world", world.getRegistryKey().getValue().toString());
                 }
                 lpUser.data().add(node.build());
             }
@@ -290,13 +294,13 @@ public class LuckPermsProvider implements PermissionProvider {
             if (value == PermissionValue.DEFAULT) {
                 NodeBuilder<?, ?> node = Node.builder(permission);
                 if (world != null) {
-                    node.withContext("world", ((WorldAccessor) world).getRegistryKey().getValue().toString());
+                    node.withContext("world", world.getRegistryKey().getValue().toString());
                 }
                 lpUser.data().remove(node.build());
             } else {
                 NodeBuilder<?, ?> node = Node.builder(permission).value(value == PermissionValue.TRUE);
                 if (world != null) {
-                    node.withContext("world", ((WorldAccessor) world).getRegistryKey().getValue().toString());
+                    node.withContext("world", world.getRegistryKey().getValue().toString());
                 }
                 node.expiry(duration.getSeconds());
                 lpUser.data().add(node.build());
@@ -324,7 +328,7 @@ public class LuckPermsProvider implements PermissionProvider {
         getLuckPerms().getUserManager().modifyUser(user.getUuid(), lpUser -> {
             NodeBuilder<?, ?> node = Node.builder("group." + group);
             if (world != null) {
-                node.withContext("world", ((WorldAccessor) world).getRegistryKey().getValue().toString());
+                node.withContext("world", world.getRegistryKey().getValue().toString());
             }
             lpUser.data().add(node.build());
         });
@@ -335,7 +339,7 @@ public class LuckPermsProvider implements PermissionProvider {
         getLuckPerms().getUserManager().modifyUser(user.getUuid(), lpUser -> {
             NodeBuilder<?, ?> node = Node.builder("group." + group);
             if (world != null) {
-                node.withContext("world", ((WorldAccessor) world).getRegistryKey().getValue().toString());
+                node.withContext("world", world.getRegistryKey().getValue().toString());
             }
             node.expiry(duration.getSeconds());
             lpUser.data().add(node.build());
@@ -347,7 +351,7 @@ public class LuckPermsProvider implements PermissionProvider {
         getLuckPerms().getUserManager().modifyUser(user.getUuid(), lpUser -> {
             NodeBuilder<?, ?> node = Node.builder("group." + group);
             if (world != null) {
-                node.withContext("world", ((WorldAccessor) world).getRegistryKey().getValue().toString());
+                node.withContext("world", world.getRegistryKey().getValue().toString());
             }
             lpUser.data().remove(node.build());
         });

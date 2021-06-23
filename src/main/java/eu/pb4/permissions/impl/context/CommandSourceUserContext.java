@@ -1,41 +1,43 @@
-package eu.pb4.permissions.api.context;
+package eu.pb4.permissions.impl.context;
 
 import com.mojang.authlib.GameProfile;
-import eu.pb4.permissions.mixin.EntityAccessor;
+import eu.pb4.permissions.api.v1.UserContext;
+import eu.pb4.permissions.mixin.ServerCommandSourceAccessor;
 import net.minecraft.entity.Entity;
+import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ServerWorld;
+import net.minecraft.util.Util;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.UUID;
 
-record PlayerUserContext(ServerPlayerEntity player, ServerWorld world) implements UserContext {
-
+public record CommandSourceUserContext(ServerCommandSource source, ServerWorld world) implements UserContext {
     @Override
     public int getPermissionLevel() {
-        return ((EntityAccessor) this.player).invokeGetPermissionLevel();
+        return ((ServerCommandSourceAccessor) this.source).permissionsApi_getPermissionLevel();
     }
 
     @Override
     public GameProfile getGameProfile() {
-        return this.player.getGameProfile();
+        return UserContext.CONSOLE_GAME_PROFILE;
     }
 
     @Override
     public UUID getUuid() {
-        return this.player.getUuid();
+        return Util.NIL_UUID;
     }
 
     @Override
     public @Nullable
     ServerPlayerEntity getPlayerEntity() {
-        return this.player;
+        return null;
     }
 
     @Override
     public @Nullable
     Entity getEntity() {
-        return this.player;
+        return null;
     }
 
     @Override

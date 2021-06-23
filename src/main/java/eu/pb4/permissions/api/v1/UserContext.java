@@ -1,7 +1,10 @@
-package eu.pb4.permissions.api.context;
+package eu.pb4.permissions.api.v1;
 
 import com.mojang.authlib.GameProfile;
-import eu.pb4.permissions.mixin.WorldAccessor;
+import eu.pb4.permissions.impl.context.CommandSourceUserContext;
+import eu.pb4.permissions.impl.context.EntityUserContext;
+import eu.pb4.permissions.impl.context.GameProfileUserContext;
+import eu.pb4.permissions.impl.context.PlayerUserContext;
 import net.minecraft.entity.Entity;
 import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.server.network.ServerPlayerEntity;
@@ -66,9 +69,8 @@ public interface UserContext {
      * @return RegistryKey of ServerWorld of user or null if global
      */
     default @Nullable RegistryKey<World> getWorldKey() {
-        return this.getWorld() != null ? ((WorldAccessor) this.getWorld()).getRegistryKey() : null;
+        return this.getWorld() != null ? this.getWorld().getRegistryKey() : null;
     }
-
 
     /**
      * Creates UserContext from player's entity
@@ -93,6 +95,7 @@ public interface UserContext {
 
     /**
      * Creates UserContext from game profile
+     * This context allows for offline usage, however it can require more time time to complete
      *
      * @param profile GameProfile
      * @return UserContext of game profile
@@ -103,6 +106,7 @@ public interface UserContext {
 
     /**
      * Creates UserContext from game profile
+     * This context allows for offline usage, however it can require more time time to complete
      *
      * @param profile GameProfile
      * @param world Targeted world
