@@ -1,8 +1,8 @@
 package eu.pb4.permissions.impl;
 
-import eu.pb4.permissions.api.v1.PermissionProvider;
-import eu.pb4.permissions.api.v1.PermissionValue;
-import eu.pb4.permissions.api.v1.UserContext;
+import eu.pb4.permissions.api.v0.PermissionProvider;
+import eu.pb4.permissions.api.v0.PermissionValue;
+import eu.pb4.permissions.api.v0.UserContext;
 import it.unimi.dsi.fastutil.objects.Object2BooleanArrayMap;
 import it.unimi.dsi.fastutil.objects.Object2BooleanMap;
 import net.minecraft.server.MinecraftServer;
@@ -91,7 +91,7 @@ public class VanillaPermissionProvider implements PermissionProvider {
     }
 
     @Override
-    public boolean supportsTimedPermissions() {
+    public boolean supportsTemporaryPermissions() {
         return false;
     }
 
@@ -112,6 +112,11 @@ public class VanillaPermissionProvider implements PermissionProvider {
 
     @Override
     public boolean supportsOfflineChecks() {
+        return false;
+    }
+
+    @Override
+    public boolean supportsChangingPlayersPermissions() {
         return false;
     }
 
@@ -153,7 +158,7 @@ public class VanillaPermissionProvider implements PermissionProvider {
     @Override
     public PermissionValue check(UserContext user, String permission) {
         var map = getPermissionMap(user);
-        if (permission.endsWith(".*") || permission.endsWith(".?")) {
+        if (permission.endsWith(".?")) {
             String substring = permission.substring(0, permission.length() - 2);
 
             return this.getList(user, substring, PermissionValue.TRUE).size() > 0
@@ -316,7 +321,7 @@ public class VanillaPermissionProvider implements PermissionProvider {
     @Override
     public PermissionValue checkGroup(String group, @Nullable ServerWorld world, String permission) {
         var map = getPermissionMap(group);
-        if (permission.endsWith(".*") || permission.endsWith(".?")) {
+        if (permission.endsWith(".?")) {
             String substring = permission.substring(0, permission.length() - 2);
 
             return this.getListGroup(group, substring, PermissionValue.TRUE).size() > 0
@@ -343,7 +348,8 @@ public class VanillaPermissionProvider implements PermissionProvider {
                 }
                 return PermissionValue.DEFAULT;
             }
-        }    }
+        }
+    }
 
     @Override
     public List<String> getListGroup(String group, @Nullable ServerWorld world, PermissionValue value) {
@@ -429,7 +435,7 @@ public class VanillaPermissionProvider implements PermissionProvider {
     }
 
     @Override
-    public Map<String, PermissionValue> getAllInheritedGroup(String group, @Nullable ServerWorld world) {
+    public Map<String, PermissionValue> getAllNonInheritedGroup(String group, @Nullable ServerWorld world) {
         Map<String, PermissionValue> map = new LinkedHashMap<>();
         for (Object2BooleanMap.Entry<String> entry : this.getPermissionMapNon(group).object2BooleanEntrySet()) {
             map.put(entry.getKey(), PermissionValue.of(entry.getBooleanValue()));
@@ -439,7 +445,7 @@ public class VanillaPermissionProvider implements PermissionProvider {
     }
 
     @Override
-    public Map<String, PermissionValue> getAllInheritedGroup(String group, String parentPermission, @Nullable ServerWorld world) {
+    public Map<String, PermissionValue> getAllNonInheritedGroup(String group, String parentPermission, @Nullable ServerWorld world) {
         Map<String, PermissionValue> map = new LinkedHashMap<>();
         for (Object2BooleanMap.Entry<String> entry : this.getPermissionMapNon(group).object2BooleanEntrySet()) {
             map.put(entry.getKey(), PermissionValue.of(entry.getBooleanValue()));

@@ -1,8 +1,8 @@
 package eu.pb4.testmod;
 
-import eu.pb4.permissions.api.v1.PermissionProvider;
-import eu.pb4.permissions.api.v1.PermissionValue;
-import eu.pb4.permissions.api.v1.UserContext;
+import eu.pb4.permissions.api.v0.PermissionProvider;
+import eu.pb4.permissions.api.v0.PermissionValue;
+import eu.pb4.permissions.api.v0.UserContext;
 import net.luckperms.api.LuckPerms;
 import net.luckperms.api.context.ContextSet;
 import net.luckperms.api.context.ImmutableContextSet;
@@ -49,7 +49,7 @@ public class LuckPermsProvider implements PermissionProvider {
         }
     }
 
-    protected QueryOptions getQuery(UserContext context, User user, ServerWorld world, boolean inheritance) {
+    protected QueryOptions getQuery(User user, ServerWorld world, boolean inheritance) {
         ContextSet contextSet = user.getQueryOptions().context().mutableCopy();
         if (world != null) {
             contextSet = ImmutableContextSet.builder().addAll(contextSet).add("world", world.getRegistryKey().getValue().toString()).build();
@@ -91,7 +91,7 @@ public class LuckPermsProvider implements PermissionProvider {
     }
 
     @Override
-    public boolean supportsTimedPermissions() {
+    public boolean supportsTemporaryPermissions() {
         return true;
     }
 
@@ -116,13 +116,18 @@ public class LuckPermsProvider implements PermissionProvider {
     }
 
     @Override
+    public boolean supportsChangingPlayersPermissions() {
+        return true;
+    }
+
+    @Override
     public Priority getPriority() {
         return Priority.MAIN;
     }
 
     @Override
     public PermissionValue check(UserContext user, String permission) {
-        if (permission.endsWith(".*") || permission.endsWith(".?")) {
+        if (permission.endsWith(".?")) {
             String basePermission = permission.substring(0, permission.length() - 2);
 
             if (this.getList(user, basePermission, PermissionValue.TRUE).size() > 0) {
@@ -133,9 +138,9 @@ public class LuckPermsProvider implements PermissionProvider {
             return PermissionValue.DEFAULT;
         }
 
-        User user1 = getUser(user);
-        if (user1 != null) {
-            return toValue(user1.getCachedData().getPermissionData().checkPermission(permission));
+        User lpUser = getUser(user);
+        if (lpUser != null) {
+            return toValue(lpUser.getCachedData().getPermissionData().checkPermission(permission));
         } else {
             return PermissionValue.DEFAULT;
         }
@@ -143,12 +148,12 @@ public class LuckPermsProvider implements PermissionProvider {
 
     @Override
     public List<String> getList(UserContext user, @Nullable ServerWorld world, PermissionValue value) {
-        User user1 = getUser(user);
-        if (user1 == null) {
+        User lpUser = getUser(user);
+        if (lpUser == null) {
             return Collections.emptyList();
         }
 
-        var stream = user1.getCachedData().getPermissionData(getQuery(user, user1, world, true)).getPermissionMap().entrySet().stream();
+        var stream = lpUser.getCachedData().getPermissionData(getQuery(lpUser, world, true)).getPermissionMap().entrySet().stream();
         if (value == PermissionValue.TRUE) {
             stream = stream.filter(Map.Entry::getValue);
         } else if (value == PermissionValue.FALSE) {
@@ -159,12 +164,12 @@ public class LuckPermsProvider implements PermissionProvider {
 
     @Override
     public List<String> getList(UserContext user, String parentPermission, @Nullable ServerWorld world, PermissionValue value) {
-        User user1 = getUser(user);
-        if (user1 == null) {
+        User lpUser = getUser(user);
+        if (lpUser == null) {
             return Collections.emptyList();
         }
 
-        var stream = user1.getCachedData().getPermissionData(getQuery(user, user1, world, true)).getPermissionMap().entrySet().stream();
+        var stream = lpUser.getCachedData().getPermissionData(getQuery(lpUser, world, true)).getPermissionMap().entrySet().stream();
         if (value == PermissionValue.TRUE) {
             stream = stream.filter(Map.Entry::getValue);
         } else if (value == PermissionValue.FALSE) {
@@ -175,12 +180,12 @@ public class LuckPermsProvider implements PermissionProvider {
 
     @Override
     public List<String> getListNonInherited(UserContext user, @Nullable ServerWorld world, PermissionValue value) {
-        User user1 = getUser(user);
-        if (user1 == null) {
+        User lpUser = getUser(user);
+        if (lpUser == null) {
             return Collections.emptyList();
         }
 
-        var stream = user1.getCachedData().getPermissionData(getQuery(user, user1, world, false)).getPermissionMap().entrySet().stream();
+        var stream = lpUser.getCachedData().getPermissionData(getQuery(lpUser, world, false)).getPermissionMap().entrySet().stream();
         if (value == PermissionValue.TRUE) {
             stream = stream.filter(Map.Entry::getValue);
         } else if (value == PermissionValue.FALSE) {
@@ -191,12 +196,12 @@ public class LuckPermsProvider implements PermissionProvider {
 
     @Override
     public List<String> getListNonInherited(UserContext user, String parentPermission, @Nullable ServerWorld world, PermissionValue value) {
-        User user1 = getUser(user);
-        if (user1 == null) {
+        User lpUser = getUser(user);
+        if (lpUser == null) {
             return Collections.emptyList();
         }
 
-        var stream = user1.getCachedData().getPermissionData(getQuery(user, user1, world, false)).getPermissionMap().entrySet().stream();
+        var stream = lpUser.getCachedData().getPermissionData(getQuery(lpUser, world, false)).getPermissionMap().entrySet().stream();
         if (value == PermissionValue.TRUE) {
             stream = stream.filter(Map.Entry::getValue);
         } else if (value == PermissionValue.FALSE) {
@@ -207,13 +212,13 @@ public class LuckPermsProvider implements PermissionProvider {
 
     @Override
     public Map<String, PermissionValue> getAll(UserContext user, @Nullable ServerWorld world) {
-        User user1 = getUser(user);
-        if (user1 == null) {
+        User lpUser = getUser(user);
+        if (lpUser == null) {
             return Collections.emptyMap();
         }
 
         Map<String, PermissionValue> map = new LinkedHashMap<>();
-        for (Map.Entry<String, Boolean> entry : user1.getCachedData().getPermissionData(getQuery(user, user1, world, true)).getPermissionMap().entrySet()) {
+        for (Map.Entry<String, Boolean> entry : lpUser.getCachedData().getPermissionData(getQuery(lpUser, world, true)).getPermissionMap().entrySet()) {
             map.put(entry.getKey(), entry.getValue() ? PermissionValue.TRUE : PermissionValue.FALSE);
         }
 
@@ -222,13 +227,13 @@ public class LuckPermsProvider implements PermissionProvider {
 
     @Override
     public Map<String, PermissionValue> getAll(UserContext user, String parentPermission, @Nullable ServerWorld world) {
-        User user1 = getUser(user);
-        if (user1 == null) {
+        User lpUser = getUser(user);
+        if (lpUser == null) {
             return Collections.emptyMap();
         }
 
         Map<String, PermissionValue> map = new LinkedHashMap<>();
-        for (Map.Entry<String, Boolean> entry : user1.getCachedData().getPermissionData(getQuery(user, user1, world, true)).getPermissionMap().entrySet()) {
+        for (Map.Entry<String, Boolean> entry : lpUser.getCachedData().getPermissionData(getQuery(lpUser, world, true)).getPermissionMap().entrySet()) {
             if (entry.getKey().startsWith(parentPermission)) {
                 map.put(entry.getKey().substring(parentPermission.length() + 1), entry.getValue() ? PermissionValue.TRUE : PermissionValue.FALSE);
             }
@@ -239,13 +244,13 @@ public class LuckPermsProvider implements PermissionProvider {
 
     @Override
     public Map<String, PermissionValue> getAllNonInherited(UserContext user, @Nullable ServerWorld world) {
-        User user1 = getUser(user);
-        if (user1 == null) {
+        User lpUser = getUser(user);
+        if (lpUser == null) {
             return Collections.emptyMap();
         }
 
         Map<String, PermissionValue> map = new LinkedHashMap<>();
-        for (Map.Entry<String, Boolean> entry : user1.getCachedData().getPermissionData(getQuery(user, user1, world, true)).getPermissionMap().entrySet()) {
+        for (Map.Entry<String, Boolean> entry : lpUser.getCachedData().getPermissionData(getQuery(lpUser, world, true)).getPermissionMap().entrySet()) {
             map.put(entry.getKey(), !entry.getValue() ? PermissionValue.TRUE : PermissionValue.FALSE);
         }
 
@@ -254,13 +259,13 @@ public class LuckPermsProvider implements PermissionProvider {
 
     @Override
     public Map<String, PermissionValue> getAllNonInherited(UserContext user, String parentPermission, @Nullable ServerWorld world) {
-        User user1 = getUser(user);
-        if (user1 == null) {
+        User lpUser = getUser(user);
+        if (lpUser == null) {
             return Collections.emptyMap();
         }
 
         Map<String, PermissionValue> map = new LinkedHashMap<>();
-        for (Map.Entry<String, Boolean> entry : user1.getCachedData().getPermissionData(getQuery(user, user1, world, false)).getPermissionMap().entrySet()) {
+        for (Map.Entry<String, Boolean> entry : lpUser.getCachedData().getPermissionData(getQuery(lpUser, world, false)).getPermissionMap().entrySet()) {
             if (entry.getKey().startsWith(parentPermission)) {
                 map.put(entry.getKey().substring(parentPermission.length() + 1), entry.getValue() ? PermissionValue.TRUE : PermissionValue.FALSE);
             }
@@ -310,13 +315,13 @@ public class LuckPermsProvider implements PermissionProvider {
 
     @Override
     public List<String> getGroups(UserContext user, @Nullable ServerWorld world) {
-        User user1 = getUser(user);
-        if (user1 == null) {
+        User lpUser = getUser(user);
+        if (lpUser == null) {
             return Collections.emptyList();
         }
 
         List<String> list = new ArrayList<>();
-        for (Group g : user1.getInheritedGroups(getQuery(user, user1, world, true))) {
+        for (Group g : lpUser.getInheritedGroups(getQuery(lpUser, world, true))) {
             String name = g.getName();
             list.add(name);
         }
@@ -359,7 +364,7 @@ public class LuckPermsProvider implements PermissionProvider {
 
     @Override
     public PermissionValue checkGroup(String group, @Nullable ServerWorld world, String permission) {
-        if (permission.endsWith(".*") || permission.endsWith(".?")) {
+        if (permission.endsWith(".?")) {
             String basePermission = permission.substring(0, permission.length() - 2);
 
             if (this.getListGroup(group, basePermission, PermissionValue.TRUE).size() > 0) {
@@ -471,7 +476,7 @@ public class LuckPermsProvider implements PermissionProvider {
     }
 
     @Override
-    public Map<String, PermissionValue> getAllInheritedGroup(String group, @Nullable ServerWorld world) {
+    public Map<String, PermissionValue> getAllNonInheritedGroup(String group, @Nullable ServerWorld world) {
         Group group1 = getLuckPerms().getGroupManager().getGroup(group);
         if (group1 == null) {
             return Collections.emptyMap();
@@ -486,7 +491,7 @@ public class LuckPermsProvider implements PermissionProvider {
     }
 
     @Override
-    public Map<String, PermissionValue> getAllInheritedGroup(String group, String parentPermission, @Nullable ServerWorld world) {
+    public Map<String, PermissionValue> getAllNonInheritedGroup(String group, String parentPermission, @Nullable ServerWorld world) {
         Group group1 = getLuckPerms().getGroupManager().getGroup(group);
         if (group1 == null) {
             return Collections.emptyMap();

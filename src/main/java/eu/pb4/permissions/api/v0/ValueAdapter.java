@@ -1,4 +1,4 @@
-package eu.pb4.permissions.api.v1;
+package eu.pb4.permissions.api.v0;
 
 import org.jetbrains.annotations.Nullable;
 

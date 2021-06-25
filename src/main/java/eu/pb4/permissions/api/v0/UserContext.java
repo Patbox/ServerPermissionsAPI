@@ -1,4 +1,4 @@
-package eu.pb4.permissions.api.v1;
+package eu.pb4.permissions.api.v0;
 
 import com.mojang.authlib.GameProfile;
 import eu.pb4.permissions.impl.context.CommandSourceUserContext;

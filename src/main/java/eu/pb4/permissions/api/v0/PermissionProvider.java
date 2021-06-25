@@ -1,4 +1,4 @@
-package eu.pb4.permissions.api.v1;
+package eu.pb4.permissions.api.v0;
 
 
 import net.minecraft.server.world.ServerWorld;
@@ -42,9 +42,9 @@ public interface PermissionProvider {
     boolean supportsGroups();
 
     /**
-     * Returns true, if provider timed groups
+     * Returns true, if provider supports temporary permissions
      */
-    boolean supportsTimedPermissions();
+    boolean supportsTemporaryPermissions();
 
     /**
      * Returns true, if provider supports groups
@@ -67,6 +67,11 @@ public interface PermissionProvider {
     boolean supportsOfflineChecks();
 
     /**
+     * Returns true, if provider supports dynamic changing of players permissions
+     */
+    boolean supportsChangingPlayersPermissions();
+
+    /**
      * Returns true, if this Permission should be a candidate for being default
      */
     Priority getPriority();
@@ -74,7 +79,7 @@ public interface PermissionProvider {
     /**
      * Checks value of player's permission
      * By default, it checks only for single permission
-     * If requested permission ends with a ".*" or ".?" it will return PermissionValue.TRUE
+     * If requested permission ends with a ".?" it will return PermissionValue.TRUE
      * when any of child permission is true, PermissionValue.DEFAULT when doesn't exist
      * or PermissionValue.FALSE when negated
      *
@@ -909,7 +914,7 @@ public interface PermissionProvider {
      * @return Map of permissions and values
      */
     default Map<String, PermissionValue> getAllNonInheritedGroup(String group) {
-        return this.getAllInheritedGroup(group, null);
+        return this.getAllNonInheritedGroup(group, (ServerWorld) null);
     }
 
     /**
@@ -920,7 +925,7 @@ public interface PermissionProvider {
      * @param world World for check (returns global and local permissions) or null (for global only)
      * @return Map of permissions and values
      */
-    Map<String, PermissionValue> getAllInheritedGroup(String group, @Nullable ServerWorld world);
+    Map<String, PermissionValue> getAllNonInheritedGroup(String group, @Nullable ServerWorld world);
 
     /**
      * Gets map of all non inherited permissions with their values for group
@@ -933,7 +938,7 @@ public interface PermissionProvider {
      * @return Map of permissions and values
      */
     default Map<String, PermissionValue> getAllNonInheritedGroup(String group, String parentPermission) {
-        return this.getAllInheritedGroup(group, null);
+        return this.getAllNonInheritedGroup(group, parentPermission, null);
     }
 
     /**
@@ -947,7 +952,7 @@ public interface PermissionProvider {
      * @param world            World for check (returns global and local permissions) or null (for global only)
      * @return Map of permissions and values
      */
-    Map<String, PermissionValue> getAllInheritedGroup(String group, String parentPermission, @Nullable ServerWorld world);
+    Map<String, PermissionValue> getAllNonInheritedGroup(String group, String parentPermission, @Nullable ServerWorld world);
 
     /**
      * This methods tries to read permission as value with usage of provided adapter.
@@ -1010,8 +1015,6 @@ public interface PermissionProvider {
     default <V> V getAsValueNonInheritedGroup(String group, String permission, @Nullable ServerWorld world, V defaultValue, ValueAdapter<V> adapter) {
         return getValueFrom(this.getListNonInheritedGroup(group, permission, world), defaultValue, adapter);
     }
-
-
 
     enum Priority {
         /**

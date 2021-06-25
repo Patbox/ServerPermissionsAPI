@@ -1,7 +1,7 @@
 package eu.pb4.permissions.impl.context;
 
 import com.mojang.authlib.GameProfile;
-import eu.pb4.permissions.api.v1.UserContext;
+import eu.pb4.permissions.api.v0.UserContext;
 import eu.pb4.permissions.mixin.ServerCommandSourceAccessor;
 import net.minecraft.entity.Entity;
 import net.minecraft.server.command.ServerCommandSource;

@@ -1,7 +1,7 @@
 package eu.pb4.permissions.impl;
 
 import eu.pb4.permissions.PermissionsAPIMod;
-import eu.pb4.permissions.api.v1.PermissionProvider;
+import eu.pb4.permissions.api.v0.PermissionProvider;
 import net.fabricmc.loader.api.FabricLoader;
 import net.fabricmc.loader.api.entrypoint.EntrypointContainer;
 import net.minecraft.server.MinecraftServer;
@@ -20,6 +20,10 @@ public final class PermissionsImpl {
     private static boolean DONE = false;
 
     public static PermissionProvider get() {
+        if (DEFAULT_PROVIDER == null) {
+            throw new RuntimeException("Provider isn't loaded yet!");
+        }
+
         return DEFAULT_PROVIDER;
     }
 
